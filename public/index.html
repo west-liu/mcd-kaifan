@@ -620,10 +620,10 @@ Authorization: Bearer ••••
 
     <h4>演示口令怎么用</h4>
     <ol>
+      <li>口令在 GitHub 主页获取：<a href="https://github.com/west-liu/mcd-kaifan" target="_blank" rel="noopener">github.com/west-liu/mcd-kaifan</a>，README 的「立即体验」一节里写着</li>
       <li>点「让 MCP 真下单」，页面会弹出输入框</li>
       <li>填入口令 <code>kf-ae182690</code>，确认</li>
       <li>口令会记在浏览器本地，同一台设备只需输入一次</li>
-      <li>再次下单会直接进二次确认，不再询问</li>
     </ol>
 
     <h4>支付与取餐</h4>
@@ -1351,7 +1351,7 @@ async function submitOrder(payload){
     return await post();
   } catch (e) {
     if (!e.passRequired) throw e;
-    const v = window.prompt('这站开了口令保护，请输入演示口令后继续下单：', '');
+    const v = window.prompt('这站开了口令保护，请输入演示口令后继续下单。\n\n口令在 GitHub 主页获取：github.com/west-liu/mcd-kaifan（README 的「立即体验」里写着）', '');
     if (!v || !v.trim()) throw new Error('已取消（没有输入口令）');
     setKfPass(v.trim());
     return await post();
