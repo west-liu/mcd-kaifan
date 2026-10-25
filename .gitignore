@@ -3,3 +3,5 @@ node_modules/
 *.log
 .DS_Store
 tools/_inline_check.js
+# 部署档案只在本地，不进仓库
+deploy/
