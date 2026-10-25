@@ -300,9 +300,62 @@ header{padding:26px 0 18px;}
 .wnote{margin-top:9px;background:#EAF3EE;border-left:3px solid var(--mint);border-radius:6px;
   padding:10px 12px;font-size:12px;line-height:1.6;color:#3F5A4C;}
 .wnote b{color:#1B1712;}
+/* 宽屏展示层：左侧品牌栏 + 网格底纹，手机端完全不受影响 */
+.side-brand{display:none;}
+@media (min-width:1180px){
+  body{
+    background:
+      radial-gradient(820px 460px at 16% 8%, rgba(255,199,44,.13), transparent 62%),
+      radial-gradient(700px 520px at 84% 86%, rgba(218,41,28,.11), transparent 62%),
+      #0B0906;
+  }
+  body::before{
+    content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
+    background-image:
+      linear-gradient(rgba(255,255,255,.025) 1px,transparent 1px),
+      linear-gradient(90deg,rgba(255,255,255,.025) 1px,transparent 1px);
+    background-size:48px 48px;
+    -webkit-mask-image:radial-gradient(circle at 50% 40%,#000,transparent 78%);
+    mask-image:radial-gradient(circle at 50% 40%,#000,transparent 78%);
+  }
+  .wrap{position:relative;z-index:1;}
+  .side-brand{
+    display:block;position:fixed;left:calc(50% - 584px);top:50%;transform:translateY(-50%);
+    width:312px;z-index:2;color:#F2EDE4;
+  }
+  .side-brand .kicker{font:600 10.5px/1 ui-monospace,Menlo,monospace;letter-spacing:.24em;
+    color:#FFC72C;text-transform:uppercase;}
+  .side-brand h1{font-size:42px;line-height:1.12;margin:18px 0 14px;letter-spacing:-.03em;font-weight:800;}
+  .side-brand h1 em{font-style:normal;color:#FFC72C;}
+  .side-brand p{font-size:13.5px;line-height:1.9;color:#A79C8B;margin:0 0 24px;}
+  .side-brand ul{list-style:none;padding:0;margin:0 0 28px;}
+  .side-brand li{font-size:12.5px;line-height:1.65;color:#D9CFBE;padding:9px 0;
+    border-top:1px dashed rgba(255,255,255,.10);}
+  .side-brand li:last-child{border-bottom:1px dashed rgba(255,255,255,.10);}
+  .side-brand li b{color:#FFC72C;font-weight:700;margin-right:9px;font-family:ui-monospace,Menlo,monospace;}
+  .side-brand .foot{font:11px/1.75 ui-monospace,Menlo,monospace;color:#6E6355;letter-spacing:.06em;}
+}
+@media (min-width:1180px) and (max-height:800px){
+  .side-brand h1{font-size:34px;}
+  .side-brand ul{display:none;}
+  .side-brand p{margin-bottom:16px;}
+}
 </style>
 </head>
 <body>
+
+<aside class="side-brand">
+  <div class="kicker">WAYTOAGI 1024 · 用餐赛道</div>
+  <h1>开饭<br><em>参谋</em></h1>
+  <p>报人数、报预算、点忌口。<br>AI 读麦当劳实时菜单，摆好一桌，<br>并把每一单交给官方算价核过。</p>
+  <ul>
+    <li><b>01</b>三套方案：均衡 / 最省钱 / 轻卡</li>
+    <li><b>02</b>calculate-price 反向校验，对不上就换</li>
+    <li><b>03</b>全桌忌口 + 逐人诉求</li>
+  </ul>
+  <div class="foot">麦当劳 MCP · 35 tools<br>west-liu.github.io/mcd-kaifan</div>
+</aside>
+
 
 <div class="wrap">
   <header>
