@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>开饭参谋 · 使用说明</title>
+<style>
+:root{--bg:#0E0B08;--card:#171310;--line:rgba(255,255,255,.10);--txt:#EDE6D8;--dim:#A99C86;--gold:#FFC72C;--red:#DA291C;--mint:#7FD8AE;}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--txt);font:15px/1.85 -apple-system,"PingFang SC","Microsoft YaHei",sans-serif;
+  background-image:radial-gradient(900px 500px at 8% -6%,rgba(255,199,44,.13),transparent 60%),radial-gradient(800px 500px at 100% 8%,rgba(218,41,28,.14),transparent 60%);
+  background-attachment:fixed;padding:0 18px 90px}
+.wrap{max-width:760px;margin:0 auto}
+header{padding:52px 0 26px;border-bottom:1px solid var(--line);margin-bottom:34px}
+.kicker{font:11.5px/1 ui-monospace,monospace;letter-spacing:.22em;color:var(--gold);margin-bottom:14px}
+header h1{font-size:34px;letter-spacing:.04em;font-weight:800}
+header h1 span{color:var(--gold)}
+.acts{display:flex;flex-wrap:wrap;gap:10px;margin-top:22px}
+.acts a{display:inline-block;padding:10px 16px;border-radius:10px;text-decoration:none;font-size:13.5px;font-weight:700;border:1px solid var(--line);background:rgba(255,255,255,.05);color:var(--txt)}
+.acts a.p{background:var(--red);border-color:var(--red);color:#fff}
+.acts a.g{background:var(--gold);border-color:var(--gold);color:#231a08}
+h1{font-size:27px;margin:42px 0 16px;letter-spacing:.02em}
+h2{font-size:22px;margin:40px 0 14px;padding-left:12px;border-left:4px solid var(--gold);letter-spacing:.02em}
+h3{font-size:17px;margin:28px 0 10px;color:var(--gold)}
+h4{font-size:15px;margin:22px 0 8px;color:var(--dim)}
+p{margin:12px 0;color:#E3DACB}
+strong{color:#fff}
+ul,ol{margin:12px 0 12px 22px;color:#E3DACB}
+li{margin:6px 0}
+blockquote{margin:18px 0;padding:14px 18px;border-left:3px solid var(--red);background:rgba(255,255,255,.04);border-radius:0 10px 10px 0;color:#D9CFBE;font-size:14.5px}
+code{font:13px ui-monospace,Menlo,monospace;background:rgba(255,255,255,.08);padding:2px 6px;border-radius:5px;color:var(--mint)}
+pre{background:#0A0806;border:1px solid var(--line);border-radius:12px;padding:16px;overflow-x:auto;margin:16px 0}
+pre code{background:none;padding:0;color:#9FE3C2;font-size:12.5px;line-height:1.75}
+.tw{overflow-x:auto;margin:18px 0;border:1px solid var(--line);border-radius:12px}
+table{width:100%;border-collapse:collapse;font-size:13.5px;min-width:520px}
+th{background:rgba(255,199,44,.10);color:var(--gold);text-align:left;padding:11px 13px;font-weight:700;white-space:nowrap}
+td{padding:11px 13px;border-top:1px solid var(--line);color:#E3DACB;vertical-align:top}
+a{color:var(--mint)}
+footer{margin-top:56px;padding-top:22px;border-top:1px solid var(--line);color:var(--dim);font-size:13px}
+@media(max-width:600px){header h1{font-size:26px}h1{font-size:22px}h2{font-size:19px}body{padding:0 14px 60px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <div class="kicker">WAYTOAGI 1024 · 用餐赛道 · 麦当劳 MCP</div>
+  <h1>开饭<span>参谋</span> · 使用说明</h1>
+  <div class="acts">
+    <a class="p" href="https://west-liu.github.io/mcd-kaifan/" target="_blank">▶ 立即体验作品</a>
+    <a class="g" href="https://west-liu.github.io/mcd-kaifan/demo.html" target="_blank">自动演示（14 步）</a>
+    <a href="https://github.com/west-liu/mcd-kaifan" target="_blank">源码仓库</a>
+  </div>
+</header>
+<main>
+<h1 id="s0">开饭参谋 · 使用说明</h1>
+<blockquote>报人数、报预算、报每个人的忌口 —— AI 读麦当劳门店实时菜单，配出三套方案，每一单都交给官方算价引擎核过价。</blockquote>
+<h2 id="s2">一、这份作品解决什么问题</h2>
+<p>一群人点麦当劳，难的不是"吃什么"，是"人多嘴杂"：</p>
+<ul><li>五个人里有人减脂、有人不吃牛肉、有人不吃辣</li><li>预算是 180 元，不能超</li><li>点完才发现：超预算了、有人不能吃、热量高得离谱</li></ul>
+<p>以前只能一个人拍脑袋点。开饭参谋把这件事变成四次点击。</p>
+<h2 id="s6">二、怎么用（30 秒上手）</h2>
+<p>打开页面，从上往下依次做四件事：</p>
+<h3 id="s8">1. 报人数</h3>
+<p>左上角 <code>−</code> / <code>+</code>，支持 1–8 人。下面会为每个人生成一张卡片。</p>
+<h3 id="s10">2. 报预算</h3>
+<p>选一个常用金额，或直接输入。这是<strong>整单总预算</strong>，不是人均。</p>
+<h3 id="s12">3. 给每个人点忌口</h3>
+<p>每张卡片上有七个标签，点一下选中：</p>
+<div class="tw"><table><thead><tr><th>标签</th><th>作用范围</th><th>说明</th></tr></thead><tbody><tr><td>减脂</td><td>只影响这个人</td><td>只从有热量数据的低卡主食里挑，饮品优先 0 卡</td></tr><tr><td>不吃牛肉</td><td><strong>全桌硬约束</strong></td><td>含牛、安格斯、巨无霸、吉士汉堡、培根的整类剔除</td></tr><tr><td>不吃辣</td><td><strong>全桌硬约束</strong></td><td>含辣、龙焰、椒盐、咖喱的整类剔除</td></tr><tr><td>不吃炸物</td><td><strong>全桌硬约束</strong></td><td>炸物、鸡块、鸡翅、薯条等整类剔除</td></tr><tr><td>素食</td><td>只影响这个人</td><td>这个人的主食位换成非肉类小食</td></tr><tr><td>不要酱</td><td>备注</td><td>生成下单备注"汉堡/炸鸡去酱"</td></tr><tr><td>去冰</td><td>备注</td><td>生成下单备注"饮品去冰"</td></tr></tbody></table></div>
+<blockquote>忌口为什么要分两层？因为<strong>一个人不吃辣，不该让全桌都没辣可吃</strong>。硬约束管全桌，个人诉求只管那一份。</blockquote>
+<h3 id="s16">4. 点「开饭」</h3>
+<p>三秒出三套方案，顶部标签页切换对比：</p>
+<ul><li><strong>吃得均衡</strong> —— 主食 + 共享小食 + 饮品 + 甜品，人均最舒服</li><li><strong>最省钱</strong> —— 优先双人餐/分享餐，人均压到最低</li><li><strong>轻卡减脂</strong> —— 只挑可核实的低卡主食，热量算给你看</li></ul>
+<p>每套方案包含：</p>
+<ul><li>整单应付价、人均、比菜单原价省了多少</li><li>每一件餐品的单价、热量、<strong>为什么选它</strong></li><li>整单热量（并标明几项有官方数据、几项未知）</li><li>还差多少到预算上限</li><li>自动生成的下单备注</li><li>页面底部：店里今天在做的活动、卡包里能领的券</li></ul>
+<h2 id="s21">三、三个真本事</h2>
+<h3 id="s22">1. 每一单都交给官方算价引擎核过</h3>
+<p>候选方案生成后，会被丢回麦当劳 <code>calculate-price</code> 接口拿真实应付价。如果某一项官方小计和菜单价对不上（典型情况：多人分享餐必须选子项，官方会按默认高价计），系统会把这件商品<strong>拉黑重搭</strong>，最多 3 轮，直到整单价格对得上才输出。</p>
+<p>所以页面上那个数字不是估算，是官方算价引擎给的。</p>
+<h3 id="s25">2. 热量不瞎猜</h3>
+<p>先查官方营养表（158 条）；套餐查不到，就拉 <code>query-meal-detail</code> 把子项按默认选择拆开逐项累加；还是查不到就<strong>如实标"未知"</strong>，绝不填假数字。</p>
+<p>轻卡方案如果有人均热量超标、或找不到可核实的低卡主食，<strong>宁可不出这套方案</strong>，也不硬凑。</p>
+<h3 id="s28">3. 数据全部来自真实接口</h3>
+<p>没有 mock，没有写死的假菜单：</p>
+<div class="tw"><table><thead><tr><th>环节</th><th>调用的 MCP 工具</th></tr></thead><tbody><tr><td>选门店</td><td><code>query-nearby-stores</code></td></tr><tr><td>拉菜单（在售餐品与价格）</td><td><code>query-meals</code></td></tr><tr><td>营养数据</td><td><code>list-nutrition-foods</code></td></tr><tr><td>拆套餐子项</td><td><code>query-meal-detail</code></td></tr><tr><td>核价</td><td><code>calculate-price</code></td></tr><tr><td>券 / 活动</td><td><code>query-coupons</code> / <code>query-campaigns</code></td></tr><tr><td>下单</td><td><code>create-order</code></td></tr></tbody></table></div>
+<h2 id="s31">四、两个版本</h2>
+<h3 id="s32">在线演示版（评委点开的链接）</h3>
+<ul><li>打开即用，<strong>不用登录、不用 Token</strong></li><li>数据是 2026-10-25 从麦当劳 MCP 真实拉取的门店菜单快照（麦当劳广州天源路餐厅，105 个在售餐品、158 条官方营养数据）</li><li>搭配算法在浏览器里跑，改人数/预算/忌口都能实时出结果</li><li>不执行真实下单（避免误触真实订单）</li></ul>
+<h3 id="s34">完整实时版（GitHub 仓库，本地一键启动）</h3>
+<pre><code>git clone https://github.com/west-liu/mcd-kaifan
+cd mcd-kaifan
+cp .env.example .env     # 填入自己的 MCD_TOKEN
+node server.js           # 打开 http://localhost:5173</code></pre>
+<p>MCP Token 在 <a href="https://open.mcd.cn/mcp" target="_blank" rel="noopener">open.mcd.cn/mcp</a> 手机号登录后免费领取。</p>
+<p>完整版多出的能力：</p>
+<ul><li>每次开饭都实时拉菜单（不是快照）</li><li>每套方案走官方 <code>calculate-price</code> 实时核价 + 对不上自动换单品重搭</li><li>真门店搜索（换城市、换门店）</li><li>二次确认后<strong>创建真实订单</strong></li><li>AI 点评方案（可选，接 TokLens 中转）</li></ul>
+<h2 id="s39">五、推荐演示路径</h2>
+<p>评委试玩建议按这个来，能一次看到所有能力：</p>
+<ol><li>人数点 <code>4</code>，预算填 <code>120</code></li><li>第 1 个人点「减脂」，第 2 个人点「不吃牛肉」</li><li>点「开饭」</li><li>看三套方案的差异 —— 均衡给甜品、省钱砍到最低、轻卡砍掉甜品换低卡主食</li><li>切回「吃得均衡」，滚到底部看店里活动与卡包券</li></ol>
+<p>再试一组极端场景：人数 <code>2</code>、预算 <code>50</code>、都点「不吃炸物」——看它怎么在紧预算里凑出一单。</p>
+<h2 id="s43">六、技术栈</h2>
+<div class="tw"><table><thead><tr><th>层</th><th>实现</th></tr></thead><tbody><tr><td>后端</td><td>Node.js 原生 <code>http</code>，零运行时依赖</td></tr><tr><td>MCP 客户端</td><td>自实现 Streamable HTTP + JSON-RPC（initialize 握手、SSE 解析、session 复用）</td></tr><tr><td>搭配算法</td><td><code>lib/planner.js</code>，与前端 <code>public/planner.js</code> 同源生成，保证两版结果一致</td></tr><tr><td>前端</td><td>单文件 HTML + 原生 JS，无框架、无构建</td></tr><tr><td>数据</td><td>麦当劳 MCP 实时接口 / 快照 JSON</td></tr></tbody></table></div>
+<h2 id="s45">七、已知边界</h2>
+<ul><li>在线版是快照数据，门店换不了（换门店需要实时接口，用本地版）</li><li>部分套餐的官方详情不返回默认子项，这类餐品热量标为"未知"，不参与轻卡筛选</li><li>分享餐的子项选择在 <code>calculate-price</code> 里无法指定，所以会出现"核价对不上 → 拉黑重搭"的循环，这是设计上的兜底，不是 bug</li><li>下单功能需要真实 MCP Token 与门店营业状态，在线演示版未开放</li></ul>
+</main>
+<footer>
+  开饭参谋 · 麦当劳 MCP × WorkBuddy · 数据来自麦当劳官方接口（query-meals / list-nutrition-foods / calculate-price）
+</footer>
+</div>
+</body>
+</html>

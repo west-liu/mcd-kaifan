@@ -19,7 +19,7 @@
 | --- | --- | --- |
 | **在线作品** | **https://west-liu.github.io/mcd-kaifan/** | 打开就能用，无需安装、无需 Token |
 | **自动演示** | **https://west-liu.github.io/mcd-kaifan/demo.html** | 14 步自动走完，适合不看说明直接看效果 |
-| **使用说明** | [docs/USAGE.md](docs/USAGE.md) | 30 秒上手 |
+| **使用说明** | [https://west-liu.github.io/mcd-kaifan/usage.html](https://west-liu.github.io/mcd-kaifan/usage.html) | 30 秒上手 |
 
 > 在线版是单文件网页，数据来自官方 MCP 快照（浏览器直连 MCP 会被 CORS 拦）。
 > 要看「实时调 MCP」，跑本地或 Docker 版，见下方**快速开始**。
@@ -29,7 +29,7 @@
 <p align="center">
   <a href="https://west-liu.github.io/mcd-kaifan/"><img src="https://img.shields.io/badge/%E2%96%B6%20%E5%9C%A8%E7%BA%BF%E4%BD%93%E9%AA%8C-FFC72C?style=for-the-badge&logoColor=black&color=FFC72C&labelColor=111" alt="在线体验"></a>
   <a href="https://west-liu.github.io/mcd-kaifan/demo.html"><img src="https://img.shields.io/badge/%E2%96%B6%20%E8%87%AA%E5%8A%A8%E6%BC%94%E7%A4%BA-14%20%E6%AD%A5-00A650?style=for-the-badge&labelColor=111" alt="自动演示"></a>
-  <a href="docs/USAGE.md"><img src="https://img.shields.io/badge/%E2%96%B6%20%E4%BD%BF%E7%94%A8%E8%AF%B4%E6%98%8E-DA291C?style=for-the-badge&labelColor=111" alt="使用说明"></a>
+  <a href="https://west-liu.github.io/mcd-kaifan/usage.html"><img src="https://img.shields.io/badge/%E2%96%B6%20%E4%BD%BF%E7%94%A8%E8%AF%B4%E6%98%8E-DA291C?style=for-the-badge&labelColor=111" alt="使用说明"></a>
 </p>
 
 <p align="center">
@@ -197,7 +197,7 @@ mcd-kaifan/
 │   └── planner.js         # 搭配引擎：人数 × 预算 × 忌口 → 三套方案
 ├── public/                # 实时版前端（H5 单文件）
 ├── dist/                  # 单文件成品 + 自动演示页
-├── docs/USAGE.md          # 使用说明
+├── https://west-liu.github.io/mcd-kaifan/usage.html          # 使用说明
 ├── Dockerfile             # node:22-alpine，ENABLE_ORDER 默认关
 ├── DEPLOY.md              # 四种部署路径 + 自检
 └── tools/                 # 构建与截图脚本
@@ -218,7 +218,7 @@ mcd-kaifan/
 
 ## 文档
 
-- [使用说明](docs/USAGE.md) · [MCP 集成说明](MCP_INTEGRATION.md) · [部署](DEPLOY.md) · [参赛声明](CONTEST_DECLARATION.md) · [开发对话记录](workbuddy.md)
+- [使用说明](https://west-liu.github.io/mcd-kaifan/usage.html) · [MCP 集成说明](MCP_INTEGRATION.md) · [部署](DEPLOY.md) · [参赛声明](CONTEST_DECLARATION.md) · [开发对话记录](workbuddy.md)
 
 ## 说明
 
