@@ -958,14 +958,14 @@ function toast(m){
 }
 /* ---------- API 基址 ----------
    三种来源，优先级从高到低：
-   1. window.__KF_API__ —— 构建时注入（静态前端 + 独立后端的正式部署）
-   2. 网址参数 ?api=https://xxx —— 临时切换，值会记进 localStorage
+   1. 网址参数 ?api=https://xxx —— 临时覆盖，值会记进 localStorage
+   2. window.__KF_API__ —— 构建时注入（静态前端 + 独立后端的正式部署）
    3. localStorage 里上次记下的值                              */
 const API_BASE = (function(){
   const norm = u => (u || '').replace(/\/+$/, '');
-  if (window.__KF_API__) return norm(window.__KF_API__);
   const q = new URLSearchParams(location.search).get('api');
   if (q) { try { localStorage.setItem('kf_api', norm(q)); } catch(e){} return norm(q); }
+  if (window.__KF_API__) return norm(window.__KF_API__);
   let s = null; try { s = localStorage.getItem('kf_api'); } catch(e){}
   return norm(s);
 })();
