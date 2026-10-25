@@ -19,7 +19,10 @@ html = html.replace(
 
 // 2) 内联数据快照，并让 snapshot() 优先读它
 const dataTag = `<script>window.__SNAPSHOT__=${snap};</script>`;
-html = html.replace('<script>\nconst $ = id =>', `${dataTag}\n<script>\nconst $ = id =>`);
+// 3) 构建时可注入后端地址：KF_API=https://api.xxx.com npm run build
+const api = (process.env.KF_API || '').replace(/\/+$/, '');
+const apiTag = api ? `<script>window.__KF_API__=${JSON.stringify(api)};</script>\n` : '';
+html = html.replace('<script>\nconst $ = id =>', `${apiTag}${dataTag}\n<script>\nconst $ = id =>`);
 
 html = html.replace(
   `async function snapshot(){

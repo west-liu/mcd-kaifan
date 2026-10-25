@@ -874,12 +874,13 @@ function toast(m){
   clearTimeout(t._t); t._t = setTimeout(() => t.classList.remove('on'), 2000);
 }
 /* ---------- API 基址 ----------
-   默认同源（本地跑 / 自带后端时后端就在同一域名下）。
-   纯静态托管（如 GitHub Pages）要接真 MCP，在网址后加
-   ?api=https://xxx.workers.dev 指向一个 MCP 边缘代理即可，
-   这个值会记进 localStorage，之后访问不用再带。            */
+   三种来源，优先级从高到低：
+   1. window.__KF_API__ —— 构建时注入（静态前端 + 独立后端的正式部署）
+   2. 网址参数 ?api=https://xxx —— 临时切换，值会记进 localStorage
+   3. localStorage 里上次记下的值                              */
 const API_BASE = (function(){
   const norm = u => (u || '').replace(/\/+$/, '');
+  if (window.__KF_API__) return norm(window.__KF_API__);
   const q = new URLSearchParams(location.search).get('api');
   if (q) { try { localStorage.setItem('kf_api', norm(q)); } catch(e){} return norm(q); }
   let s = null; try { s = localStorage.getItem('kf_api'); } catch(e){}

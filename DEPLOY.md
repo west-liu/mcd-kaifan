@@ -75,6 +75,54 @@ server {
 付款成功后轮询会把状态改成「付款成功 · 取餐码 XXXX」；不付则 15 分钟后自动取消。
 
 
+## 方式二-B：前端在域名 + 后端单独 Docker（跨域）
+
+前端静态托管在域名上（GitHub Pages / 任意静态站），后端只做 API、负责调 MCP 和下单支付。
+
+```
+浏览器 ──> https://west-liu.github.io/mcd-kaifan/   （静态页面）
+              └─ fetch ──> https://api.xxx.com/api/*  （Docker 后端 → mcp.mcd.cn）
+```
+
+两个硬性前提：
+
+1. **两边都必须是 https**。前端是 https、后端是 http 会被浏览器按混合内容拦掉。
+2. 后端要开 CORS，并且放行 `x-demo-pass` 头（否则带口令的下单请求预检就过不去）。后端已内置，用 `ALLOW_ORIGIN` 收紧。
+
+后端 `.env` 多加一行：
+
+```bash
+ALLOW_ORIGIN=https://west-liu.github.io
+```
+
+后端没有域名时，先给它一个稳定 https 名字（免费）：
+
+```bash
+# DuckDNS：注册 mykaifan.duckdns.org 指向服务器 IP，然后签证书
+sudo apt install -y nginx certbot python3-certbot-nginx
+sudo certbot --nginx -d mykaifan.duckdns.org
+# 反代到容器（Nginx 里 proxy_pass http://127.0.0.1:5173）
+```
+
+然后前端构建时把后端地址写死（优先级高于 `?api=` 参数，普通链接也能实时调 MCP）：
+
+```bash
+KF_API=https://mykaifan.duckdns.org npm run build
+git add index.html demo.html dist && git commit -m "build: 注入后端地址" && git push
+```
+
+验证跨域是通的（应返回 204 且带 `Access-Control-Allow-Origin`）：
+
+```bash
+curl -i -X OPTIONS https://mykaifan.duckdns.org/api/order \
+  -H "Origin: https://west-liu.github.io" \
+  -H "Access-Control-Request-Method: POST" \
+  -H "Access-Control-Request-Headers: content-type,x-demo-pass"
+```
+
+打开 `https://west-liu.github.io/mcd-kaifan/`，门店条能拉到真实门店就说明前端已经连上后端；
+点下单会弹口令框，付款二维码照常出。想临时切回快照模式，把 `KF_API` 构建成空值重新 build 即可。
+
 ## 方式三：服务器裸跑 Node（无 Docker）
 
 ```bash

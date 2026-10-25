@@ -29,11 +29,19 @@ const DEFAULT_CITY = process.env.DEFAULT_CITY || '广州';
 const DEFAULT_STORE = process.env.DEFAULT_STORE || '';
 // 演示口令：设了才要求下单时带 x-demo-pass，避免公网被人用你的账号刷真单
 const DEMO_PASS = process.env.DEMO_PASS || '';
+// 跨域：前端部署在别的域名（如 GitHub Pages）时，浏览器要能直接调这个后端
+const ALLOW_ORIGIN = process.env.ALLOW_ORIGIN || '*';
+const CORS = {
+  'Access-Control-Allow-Origin': ALLOW_ORIGIN,
+  'Access-Control-Allow-Methods': 'GET,POST,OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type,x-demo-pass',
+  'Access-Control-Max-Age': '86400',
+};
 const MEDIA_DIR = path.join(__dirname, 'public');
 
 // ---------- 工具 ----------
 function send(res, code, obj) {
-  res.writeHead(code, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' });
+  res.writeHead(code, { ...CORS, 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' });
   res.end(JSON.stringify(obj));
 }
 function readBody(req) {
@@ -180,6 +188,12 @@ const MIME = {
 const server = http.createServer(async (req, res) => {
   const url = new URL(req.url, 'http://localhost');
   const p = url.pathname;
+
+  // 跨域预检：前端在别的域名时，浏览器会先发 OPTIONS
+  if (req.method === 'OPTIONS') {
+    res.writeHead(204, CORS);
+    return res.end();
+  }
 
   try {
     // 门店搜索
