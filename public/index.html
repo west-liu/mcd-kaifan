@@ -389,6 +389,32 @@ body{-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;}
 /* 滚动条：细、克制 */
 .result::-webkit-scrollbar{width:6px;}
 .result::-webkit-scrollbar-thumb{background:rgba(255,255,255,.14);border-radius:3px;}
+
+/* 使用手册 */
+.hfab{position:fixed;right:20px;bottom:20px;z-index:60;border-radius:999px;padding:12px 18px;
+  font-size:12.5px;font-weight:800;letter-spacing:.4px;cursor:pointer;
+  background:linear-gradient(180deg,#FFC93C,#E8A317);color:#2A1C05;border:0;
+  box-shadow:0 10px 26px rgba(0,0,0,.4);}
+.hfab:active{transform:scale(.97);}
+.hmask{position:fixed;inset:0;z-index:70;background:rgba(8,6,2,.72);backdrop-filter:blur(4px);
+  display:flex;align-items:center;justify-content:center;padding:18px;}
+.hmask[hidden]{display:none;}
+.hbox{width:min(680px,100%);max-height:86vh;overflow:auto;border-radius:18px;padding:24px 22px 20px;
+  background:#171310;border:1px solid rgba(255,255,255,.12);color:#EDE4D2;
+  box-shadow:0 24px 60px rgba(0,0,0,.6);}
+.hbox h3{margin:0 0 4px;font-size:19px;}
+.hbox .hsub{font-size:11.5px;color:#8F8672;margin-bottom:16px;}
+.hbox h4{margin:18px 0 7px;font-size:12px;letter-spacing:1px;color:#FFC93C;
+  font-family:ui-monospace,Menlo,monospace;}
+.hbox p,.hbox li{font-size:12.8px;line-height:1.72;color:#CFC4AE;}
+.hbox ol,.hbox ul{margin:0;padding-left:20px;}
+.hbox li{margin:3px 0;}
+.hbox code{background:rgba(255,201,60,.14);border:1px solid rgba(255,201,60,.3);
+  color:#FFD873;padding:1px 6px;border-radius:5px;font-size:12.5px;}
+.hbox a{color:#FFC93C;word-break:break-all;}
+.hbox .warn{margin-top:14px;padding:11px 13px;border-radius:10px;font-size:12px;line-height:1.65;
+  background:rgba(218,41,28,.13);border:1px solid rgba(218,41,28,.35);color:#FFB3AA;}
+.hclose{float:right;border:0;background:transparent;color:#8F8672;font-size:20px;cursor:pointer;line-height:1;}
 </style>
 </head>
 <body>
@@ -568,6 +594,61 @@ Authorization: Bearer ••••
 <div class="toast" id="toast"></div>
 
 <script src="planner.js"></script>
+<button class="hfab" id="helpBtn">使用手册</button>
+
+<div class="hmask" id="helpModal" hidden>
+  <div class="hbox">
+    <button class="hclose" id="helpClose">×</button>
+    <h3>开饭参谋 · 使用手册</h3>
+    <div class="hsub">WAYTOAGI 1024 · 用餐赛道 · 麦当劳 MCP 实时接入</div>
+
+    <h4>访问入口</h4>
+    <ul>
+      <li>比赛提交地址：<a href="https://west-liu.github.io/mcd-kaifan/" target="_blank" rel="noopener">west-liu.github.io/mcd-kaifan</a></li>
+      <li>备用直连（国内更稳）：<a href="https://kaifan.waymate.vip" target="_blank" rel="noopener">kaifan.waymate.vip</a></li>
+      <li>两个地址是同一份页面、同一个后端，功能完全一致</li>
+    </ul>
+
+    <h4>三十秒走一遍</h4>
+    <ol>
+      <li>确认门店（默认广州天源路餐厅 1400359，可点「换店」改）</li>
+      <li>选人数、填预算，按人勾忌口</li>
+      <li>点「开饭参谋 · 摆一桌」，得到均衡 / 最省钱 / 轻卡三套方案</li>
+      <li>任意方案里可换菜、加减份数，价格都由 calculate-price 重算</li>
+      <li>想看真下单，点「让 MCP 真下单」</li>
+    </ol>
+
+    <h4>演示口令怎么用</h4>
+    <ol>
+      <li>点「让 MCP 真下单」，页面会弹出输入框</li>
+      <li>填入口令 <code>kf-ae182690</code>，确认</li>
+      <li>口令会记在浏览器本地，同一台设备只需输入一次</li>
+      <li>再次下单会直接进二次确认，不再询问</li>
+    </ol>
+
+    <h4>支付与取餐</h4>
+    <ol>
+      <li>下单成功后页面出现麦当劳官方支付二维码</li>
+      <li>用微信或支付宝扫码，在 15 分钟内完成付款</li>
+      <li>付款成功后页面自动轮询到取餐码，麦当劳 App「订单」里也会出现这一单</li>
+    </ol>
+
+    <div class="warn">
+      为什么手机 App 里看不到订单：未支付的订单会在 15 分钟后由官方自动取消（状态「订单已取消」），取消的单不会出现在有效订单里。必须扫码付款成功，才会有可用的取餐码。
+    </div>
+
+    <h4>卡包说明</h4>
+    <p>页面里「我的卡包」读的是 <code>query-my-coupons</code>，即账号真实拥有的券；「麦麦省还有 N 张可领」读的是 <code>available-coupons</code>，是还没领的券，两者不是一回事。</p>
+
+    <h4>技术要点</h4>
+    <ul>
+      <li>门店、菜单、核价、下单全部经麦当劳官方 MCP（35 个工具）实时返回</li>
+      <li>后端 Docker 常驻，前端静态托管，同域部署时无需跨域配置</li>
+      <li>下单接口有口令保护，避免演示链接被陌生人刷真单</li>
+    </ul>
+  </div>
+</div>
+
 <script>
 const $ = id => document.getElementById(id);
 const PREFS = [
@@ -1358,6 +1439,18 @@ function drawQr(text){
   s.onerror = () => { el.innerHTML = ''; };
   document.head.appendChild(s);
 }
+
+/* ---------- 使用手册 ---------- */
+(() => {
+  const m = $('helpModal'), b = $('helpBtn');
+  if (!m || !b) return;
+  const open = () => m.removeAttribute('hidden');
+  const close = () => m.setAttribute('hidden', '');
+  b.onclick = open;
+  $('helpClose').onclick = close;
+  m.onclick = e => { if (e.target === m) close(); };
+  addEventListener('keydown', e => { if (e.key === 'Escape') close(); });
+})();
 
 /* ---------- 启动 ---------- */
 (async () => {
