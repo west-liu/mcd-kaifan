@@ -227,6 +227,61 @@ header{padding:26px 0 18px;}
 .cbox .row2 button{flex:1;padding:12px;border-radius:11px;font-size:13px;font-weight:700;border:none;cursor:pointer;}
 .cbox .no{background:rgba(255,255,255,.08);color:#CFC4AE;}
 .cbox .yes{background:var(--red);color:#fff;}
+
+/* ---------- 餐品：可点开看构成 / 可改单 ---------- */
+.item{cursor:pointer;border-radius:7px;transition:background .14s;}
+.item:hover{background:#F3EAD5;}
+.item:active{background:#EBE0C6;}
+.item .row{gap:7px;}
+.item .more{flex:none;font-size:9.5px;font-weight:800;color:#8A6A12;border:1px solid #DCC98F;
+  border-radius:5px;padding:2px 5px;font-family:ui-monospace,Menlo,monospace;line-height:1.6;
+  background:#F7EDCF;letter-spacing:.3px;}
+.note{cursor:pointer;position:relative;padding-right:54px;}
+.note:active{background:#E9DFC6;}
+.note .pen{position:absolute;right:9px;top:9px;font-size:9.5px;font-weight:800;color:#8A6A12;
+  border:1px solid #DCC98F;border-radius:5px;padding:2px 5px;background:#F7EDCF;
+  font-family:ui-monospace,Menlo,monospace;letter-spacing:.3px;}
+.tag-edited{display:inline-block;margin-left:7px;font-size:9px;font-weight:800;color:#8A6A12;
+  background:#F3E4BC;border-radius:3px;padding:1px 4px;letter-spacing:.5px;vertical-align:2px;
+  font-family:ui-monospace,Menlo,monospace;}
+
+/* 餐品详情抽屉 */
+.dish{display:flex;gap:13px;}
+.dish img{width:92px;height:92px;border-radius:13px;object-fit:cover;background:#0002;flex:none;}
+.dish .info{flex:1;min-width:0;}
+.dish .info h4{font-size:16.5px;font-weight:800;line-height:1.32;}
+.dish .info .pp{font-size:19px;font-weight:800;color:var(--gold);font-family:ui-monospace,Menlo,monospace;margin-top:7px;}
+.dish .info .pp s{font-size:11px;color:var(--dim);font-weight:400;margin-left:7px;}
+.dishmeta{display:flex;flex-wrap:wrap;gap:6px;margin-top:11px;}
+.dishmeta span{font-size:10.5px;color:#B7AC98;border:1px solid var(--line);border-radius:6px;
+  padding:3px 7px;font-family:ui-monospace,Menlo,monospace;}
+.parts{margin-top:14px;border-top:1px dashed var(--line);padding-top:11px;}
+.parts .ph{font-size:9.5px;letter-spacing:1.3px;font-weight:800;color:var(--gold);
+  font-family:ui-monospace,Menlo,monospace;margin-bottom:4px;}
+.parts .psub{font-size:10.5px;color:#6E6553;margin-bottom:8px;line-height:1.5;}
+.part{display:flex;align-items:baseline;gap:8px;padding:7px 0;border-bottom:1px dotted rgba(255,255,255,.08);}
+.part:last-child{border-bottom:0;}
+.part .pn{flex:1;font-size:12.5px;color:#DED4C0;line-height:1.45;}
+.part .pk{font-size:11px;color:#8F8672;font-family:ui-monospace,Menlo,monospace;flex:none;}
+.dwhy{margin-top:12px;font-size:11.5px;color:#9C927F;line-height:1.65;}
+.dwhy b{color:#CFC4AE;font-weight:600;}
+.dishacts{display:flex;gap:8px;margin-top:18px;}
+.dishacts button{flex:1;border-radius:11px;padding:12px 6px;font-size:13px;font-weight:700;
+  border:1px solid var(--line);background:rgba(255,255,255,.07);color:var(--paper);cursor:pointer;}
+.dishacts button.primary{background:var(--gold);border-color:var(--gold);color:#2A1C05;}
+.dishacts button.danger{background:transparent;border-color:rgba(218,41,28,.45);color:#FF8A7D;}
+.frow{margin-bottom:13px;}
+.frow label{display:block;font-size:11px;color:var(--dim);margin-bottom:6px;letter-spacing:.4px;}
+.frow textarea,.frow input{width:100%;background:rgba(255,255,255,.06);border:1px solid var(--line);
+  border-radius:11px;padding:11px 13px;color:var(--paper);font-size:13.5px;outline:none;
+  font-family:inherit;line-height:1.6;resize:vertical;}
+.frow textarea{min-height:62px;}
+.frow textarea:focus,.frow input:focus{border-color:var(--gold);}
+.fhint{font-size:10.5px;color:#6E6553;margin-top:5px;line-height:1.5;}
+.savbtn{width:100%;background:var(--gold);color:#2A1C05;border:none;border-radius:12px;padding:14px;
+  font-size:14px;font-weight:800;cursor:pointer;letter-spacing:.5px;}
+.code{background:#0E0B08;border:1px solid var(--line);border-radius:9px;padding:11px 12px;margin-top:10px;
+  font:11.5px/1.75 ui-monospace,Menlo,monospace;color:#9FE3C2;overflow-x:auto;white-space:pre;}
 </style>
 </head>
 <body>
@@ -294,6 +349,51 @@ header{padding:26px 0 18px;}
     <div class="row2">
       <button class="no" id="confirmNo">再想想</button>
       <button class="yes" id="confirmYes">确认下单</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal" id="dishModal">
+  <div class="sheet" id="dishSheet"></div>
+</div>
+
+<div class="modal" id="noteModal">
+  <div class="sheet">
+    <h3>改下单备注<span class="x" id="closeNote">×</span></h3>
+    <div class="frow">
+      <label>下单备注（会一起复制/下单）</label>
+      <textarea id="noteInput" placeholder="例如：饮品去冰；汉堡去酱"></textarea>
+    </div>
+    <div class="frow">
+      <label>全桌避开（用、分隔）</label>
+      <input id="blockInput" placeholder="例如：牛肉、辣味">
+      <div class="fhint">改完这里，复制清单和下单都会用新备注。</div>
+    </div>
+    <button class="savbtn" id="saveNote">保存备注</button>
+  </div>
+</div>
+
+<div class="modal" id="mcpModal">
+  <div class="sheet">
+    <h3>这一步在本地版会发生什么<span class="x" id="closeMcp">×</span></h3>
+    <div class="dwhy" style="margin-top:0">
+      在线版是纯静态页面，浏览器不能直接连麦当劳 MCP（MCP 不开 CORS），所以这里只做演示。
+      用源码跑本地版，点同一个按钮就会真的走下面这条链：
+    </div>
+    <div class="code">POST https://mcp.mcd.cn
+Authorization: Bearer ••••
+
+1. query-meal-detail  → 拿默认子项（套餐拆解）
+2. calculate-price    → 官方核价，覆盖本地估算
+3. create-order       → 生成真实订单（到店取餐）
+   ↩ { code:200, data:{ orderId:"...", payAmount:"...", pickupCode:"..." } }</div>
+    <div class="dwhy">
+      本地跑法：<br>
+      <b>cd mcd-kaifan</b> → 填好 <b>.env</b> 里的 MCD_TOKEN → <b>node server.js</b> → 打开 <b>localhost:5173</b>
+    </div>
+    <div class="fhint">注意：create-order 会产生真实订单并占用门店库存，所以按钮后面还有一层确认弹窗。</div>
+    <div class="dishacts">
+      <button class="primary" id="mcpOk">知道了</button>
     </div>
   </div>
 </div>
@@ -377,7 +477,7 @@ function build({ headcount, budget, prefs, catalog, table, mode, banned }) {
     const kcal = kcalOf(item, table);
     picked.push({
       kind, code: item.code, name: item.name, price: item.price,
-      qty, why, cat: item.cat, kcal,
+      originalPrice: item.originalPrice, qty, why, cat: item.cat, kcal,
     });
     remaining = Math.round((remaining - item.price * qty) * 10) / 10;
   };
@@ -839,18 +939,20 @@ function planCard(p, isHero){
     if (!items.length) return '';
     return `<div class="sec"><span class="k">${en}</span><span class="n">${name}</span></div>` +
       items.map(it => `
-        <div class="item">
+        <div class="item" data-idx="${p.items.indexOf(it)}">
           <div class="row">
             <div class="nm"><span class="q">${it.qty}×</span>${it.name}${
               it.kcal != null ? `<span class="kc">${it.kcal}kcal</span>` : ''}</div>
             <div class="pr">${(it.price * it.qty).toFixed(1)}</div>
+            <div class="more">改</div>
           </div>
           <div class="why">${it.why}</div>
         </div>`).join('');
   }).filter(Boolean).join('<div class="dash thin"></div>');
 
   const px = p.price || {};
-  const saved = (px.original && px.payable && px.original > px.payable)
+  const official = p.pricedBy === 'mcd-calculate-price' && !p.edited;
+  const saved = (official && px.original && px.payable && px.original > px.payable)
     ? `<div class="trow"><span>官方算价已省</span><span class="mint">-${money(px.original - px.payable)}</span></div>` : '';
   const kcalLine = p.totalKcal != null
     ? `<div class="trow"><span>总热量${p.kcalFull ? '' : `（${p.kcalKnown}/${p.kcalTotal} 项有数据）`}</span><span class="mint">${p.totalKcal} kcal</span></div>`
@@ -866,9 +968,11 @@ function planCard(p, isHero){
       ${secs}
       <div class="dash"></div>
       <div class="tot">
-        <div class="trow hl"><span>应付（官方核价）</span><b>${money(p.total)}</b></div>
+        <div class="trow hl"><span>应付${p.edited
+          ? '（手改后重算）<span class="tag-edited">手改</span>'
+          : '（官方核价）'}</span><b>${money(p.total)}</b></div>
         ${px.original && Math.abs(px.original - p.total) > 0.05
-          ? `<div class="trow"><span>原价</span><span class="strike">${money(px.original)}</span></div>` : ''}
+          ? `<div class="trow"><span>${official ? '原价' : '菜单标价'}</span><span class="strike">${money(px.original)}</span></div>` : ''}
         ${saved}
         <div class="trow"><span>人均</span><span class="mint">${money(p.perPerson)}</span></div>
         <div class="trow"><span>预算结余</span><span class="mint">${money(p.leftover)}</span></div>
@@ -876,12 +980,17 @@ function planCard(p, isHero){
       </div>
       <div class="bbar"><i style="width:${Math.min(100, p.usage)}%"></i></div>
       <div class="blabel"><span>已用 ${p.usage}%</span><span>预算 ${money(plan.budget)}</span></div>
-      <div class="note">
+      <div class="note" onclick="openNote()">
         <b>下单备注：</b>${p.orderNote}
         ${p.blockedList.length ? `<br><b>全桌避开：</b>${p.blockedList.join('、')}` : ''}
         ${p.notes.length ? `<br>${p.notes.join('；')}` : ''}
+        <span class="pen">改</span>
       </div>
-      <div class="stamp2">价格由麦当劳 MCP calculate-price 实时核出 · ${p.pricedBy === 'mcd-calculate-price' ? '官方价' : '本地估算'}</div>
+      <div class="stamp2">${p.edited
+        ? '已手动改单 · 按菜单价本地重算，官方核价需在本地版重跑'
+        : (p.pricedBy === 'mcd-calculate-price'
+          ? '价格由麦当劳 MCP calculate-price 实时核出 · 官方价'
+          : '价格按麦当劳 MCP 拉取的菜单价本地核算 · 快照数据')}</div>
       ${isHero ? `<div class="ai loading"><span class="lbl">AI 参谋</span><span class="txt">${plan.summary || '正在生成点评…'}</span></div>` : ''}
     </div>`;
 }
@@ -915,6 +1024,7 @@ function renderResult(){
   // 切回主推方案且 AI 点评还没回来时，继续轮询
   if (plan.live && hero.mode === plan.heroMode && plan.summarySource !== 'ai') startPoll(plan.id);
   loadExtra();
+  bindItems();
 }
 
 async function getCampaigns(){
@@ -970,6 +1080,171 @@ function closeResult(){
 
 function curPlan(){ return plan.plans.find(p => p.mode === curMode) || plan.plans[0]; }
 
+/* ---------- 点开看构成 / 改单 ---------- */
+const AVOID_RE = {
+  nobeef: /牛|安格斯|巨无霸|吉士汉堡|培根/,
+  nospicy: /辣|龙焰|韩式辣椒|椒盐|咖喱/,
+  nofried: /炸|脆|鸡块|鸡翅|鸡排|薯|V翅|鸡柳|芝士条/,
+};
+const KJ2KCAL = v => Math.round(v / 4.184);
+let noteTarget = null;
+
+function itemInfo(code){
+  if (!SNAP) return null;
+  for (const k of Object.keys(SNAP.catalog)) {
+    const hit = SNAP.catalog[k].find(x => x.code === code);
+    if (hit) return Object.assign({ kind: k }, hit);
+  }
+  return null;
+}
+function avoidSet(){
+  const s = new Set();
+  state.prefs.forEach(set => set.forEach(x => { if (AVOID_RE[x]) s.add(x); }));
+  return s;
+}
+function bindItems(){
+  document.querySelectorAll('#cardBox .item').forEach(el => {
+    el.onclick = () => openDish(Number(el.dataset.idx));
+  });
+}
+function openDish(idx){
+  const p = curPlan(); if (!p) return;
+  const it = p.items[idx]; if (!it) return;
+  const info = itemInfo(it.code) || {};
+  const parts = (info.kcalParts || []).map(t => {
+    const m = String(t).match(/^(.*?)\s+(\d+(?:\.\d+)?)$/);
+    return m ? { name: m[1], kj: Number(m[2]) } : { name: String(t), kj: null };
+  });
+  const isCombo = parts.length >= 2;
+  const tags = (info.tags || []).filter(Boolean);
+
+  $('dishSheet').innerHTML = `
+    <h3>这道是什么<span class="x" id="closeDish">×</span></h3>
+    <div class="dish">
+      ${info.image ? `<img src="${info.image}" alt="">` : ''}
+      <div class="info">
+        <h4>${it.name}</h4>
+        <div class="pp">${money(it.price)}${info.originalPrice > it.price
+          ? `<s>原价 ${money(info.originalPrice)}</s>` : ''}</div>
+      </div>
+    </div>
+    <div class="dishmeta">
+      <span>${it.qty} 份</span>
+      <span>${it.kcal != null ? it.kcal + ' kcal/份' : (isCombo ? '总热量未公示' : '热量未公示')}</span>
+      ${info.cat ? `<span>${info.cat}</span>` : ''}
+      ${tags.slice(0, 3).map(t => `<span>${t}</span>`).join('')}
+    </div>
+    ${isCombo ? `
+      <div class="parts">
+        <div class="ph">这套里有什么</div>
+        <div class="psub">麦当劳 query-meal-detail 给出的默认子项（${parts.length} 项），热量按官方千焦值折算。</div>
+        ${parts.map(x => `<div class="part"><div class="pn">1× ${x.name}</div>
+          <div class="pk">${x.kj != null ? KJ2KCAL(x.kj) + ' kcal' : '—'}</div></div>`).join('')}
+      </div>` : `
+      <div class="parts">
+        <div class="ph">怎么吃</div>
+        <div class="psub">单品，没有子项拆解。热量取自麦当劳官方营养表（原始值是千焦，已折算成大卡）。</div>
+      </div>`}
+    <div class="dwhy"><b>参谋选它的理由：</b>${it.why}</div>
+    <div class="dishacts">
+      <button class="primary" id="dishSwap">换一个</button>
+      <button id="dishPlus">加一份</button>
+      <button class="danger" id="dishDel">删掉</button>
+    </div>`;
+  $('dishModal').classList.add('on');
+  $('closeDish').onclick = closeDish;
+  $('dishSwap').onclick = () => swapDish(idx);
+  $('dishPlus').onclick = () => qtyDish(idx, 1);
+  $('dishDel').onclick = () => qtyDish(idx, -1);
+}
+function closeDish(){ $('dishModal').classList.remove('on'); }
+
+function poolOf(kind, excludeCode){
+  if (!SNAP) return [];
+  const avoid = avoidSet();
+  const taken = new Set(curPlan().items.map(i => i.code));
+  return (SNAP.catalog[kind] || [])
+    .filter(x => x.code !== excludeCode && !taken.has(x.code))
+    .filter(x => {
+      const text = `${x.name} ${x.cat || ''} ${(x.tags || []).join(' ')}`;
+      for (const k of avoid) if (AVOID_RE[k].test(text)) return false;
+      return true;
+    })
+    .sort((a, b) => a.price - b.price);
+}
+function swapDish(idx){
+  const p = curPlan(); const it = p.items[idx]; if (!it) return;
+  if (!SNAP) return toast('菜单还在加载，稍等一下');
+  const pool = poolOf(it.kind, it.code);
+  if (!pool.length) return toast('这一类里没有符合当前忌口的备选了');
+  const next = pool.find(x => x.price >= it.price - 0.01) || pool[0];
+  it.code = next.code; it.name = next.name; it.price = next.price;
+  it.originalPrice = next.originalPrice == null ? next.price : next.originalPrice;
+  it.kcal = next.kcal == null ? null : next.kcal;
+  it.cat = next.cat;
+  it.why = `手动换成同类备选 · ${money(next.price)}${
+    next.originalPrice > next.price ? `（原价 ${money(next.originalPrice)}）` : ''}`;
+  touchPlan(p); closeDish(); rerenderCard();
+  toast('已换成「' + next.name + '」');
+}
+function qtyDish(idx, d){
+  const p = curPlan(); const it = p.items[idx]; if (!it) return;
+  const q = it.qty + d;
+  if (q <= 0) {
+    if (p.items.length <= 1) return toast('至少留一样，不然这桌就空了');
+    p.items.splice(idx, 1);
+  } else if (q > 20) {
+    return;
+  } else {
+    it.qty = q;
+  }
+  touchPlan(p); closeDish(); rerenderCard();
+  toast(q <= 0 ? '已从清单里去掉' : (d > 0 ? '加了一份' : '减了一份'));
+}
+function touchPlan(p){
+  p.edited = true;
+  p.pricedBy = 'manual';
+  const total = Math.round(p.items.reduce((n, i) => n + i.price * i.qty, 0) * 10) / 10;
+  p.total = total;
+  p.perPerson = Math.round((total / plan.headcount) * 10) / 10;
+  p.leftover = Math.round((plan.budget - total) * 10) / 10;
+  p.usage = Math.round((total / plan.budget) * 100);
+  const list = p.items.map(i => (i.kcal == null ? null : i.kcal * i.qty));
+  const known = list.filter(x => x != null);
+  p.totalKcal = known.length ? Math.round(list.reduce((a, b) => (a || 0) + (b || 0), 0)) : null;
+  p.kcalFull = known.length === list.length;
+  p.kcalKnown = known.length;
+  p.kcalTotal = list.length;
+  const orig = Math.round(p.items.reduce((n, i) => n + (i.originalPrice || i.price) * i.qty, 0) * 10) / 10;
+  p.originalTotal = orig;
+  p.price = Object.assign({}, p.price || {}, { payable: total, original: orig });
+}
+function rerenderCard(){
+  const keep = $('result').scrollTop;
+  renderResult();
+  $('result').scrollTop = keep;
+}
+
+function openNote(){
+  const p = curPlan(); if (!p) return;
+  noteTarget = p;
+  $('noteInput').value = p.orderNote === '无特殊备注' ? '' : p.orderNote;
+  $('blockInput').value = (p.blockedList || []).join('、');
+  $('noteModal').classList.add('on');
+}
+$('closeNote').onclick = () => $('noteModal').classList.remove('on');
+$('saveNote').onclick = () => {
+  const p = noteTarget; if (!p) return;
+  const t = $('noteInput').value.trim();
+  p.orderNote = t || '无特殊备注';
+  p.blockedList = $('blockInput').value.split(/[、,，\s]+/).map(s => s.trim()).filter(Boolean);
+  $('noteModal').classList.remove('on');
+  rerenderCard();
+  toast('备注已更新');
+};
+$('closeMcp').onclick = () => $('mcpModal').classList.remove('on');
+$('mcpOk').onclick = () => $('mcpModal').classList.remove('on');
+
 function copyOrder(){
   const p = curPlan(); if (!p) return;
   const lines = ['【开饭参谋】' + plan.headcount + ' 人 · 预算 ' + money(plan.budget),
@@ -994,7 +1269,7 @@ let orderPayload = null;
 function askOrder(){
   const p = curPlan(); if (!p) return;
   if (plan && plan.live === false) {
-    toast('在线演示版不下单；本地运行源码可直连 MCP 下单');
+    $('mcpModal').classList.add('on');
     return;
   }
   orderPayload = { confirm: true, storeCode: plan.storeCode,
@@ -1050,61 +1325,78 @@ $('confirmYes').onclick = async () => {
       txt=document.getElementById('__txt'), hi=null;
   function say(n,s){ step.textContent=('0'+n).slice(-2); txt.textContent=s; cap.classList.add('on'); }
   function mark(el){ if(hi) hi.classList.remove('__hi'); if(el){ hi=el; el.classList.add('__hi'); } }
-  var T=[];
-  function at(ms,fn){ T.push(setTimeout(fn,ms)); }
+  function at(ms,fn){ setTimeout(fn,ms); }
 
   at(400, function(){
     say(1,'四个人吃麦当劳，一个减脂、一个不吃牛肉，预算 150。');
     mark(document.getElementById('hc'));
   });
-  at(2600, function(){
+  at(2400, function(){
     say(2,'先报人数：加到 4 位。');
     var p=document.getElementById('plus'); mark(p); p.click();
   });
-  at(4600, function(){
+  at(4200, function(){
     say(3,'再报预算：选 ¥150。');
-    var c=[...document.getElementById('budgetChips').children].find(x=>x.dataset.v==='150');
+    var c=[].slice.call(document.getElementById('budgetChips').children).filter(function(x){return x.dataset.v==='150';})[0];
     if(c){ mark(c); c.click(); } else { setBudget(150); }
   });
-  at(6600, function(){
+  at(6000, function(){
     say(4,'第 1 位在减脂，勾上「减脂」。');
     var t=document.querySelector('.person[data-i="0"] .tag[data-p="diet"]');
     if(t){ mark(t); t.click(); }
   });
-  at(8600, function(){
+  at(7800, function(){
     say(5,'第 2 位不吃牛肉——这会让全桌都避开牛肉。');
     var t=document.querySelector('.person[data-i="1"] .tag[data-p="nobeef"]');
     if(t){ mark(t); t.click(); }
   });
-  at(10600, function(){
+  at(9600, function(){
     say(6,'点「开饭」，读麦当劳真实菜单开始搭配。');
     mark(document.getElementById('go'));
   });
-  at(12200, function(){
+  at(11000, function(){
     mark(null);
     document.getElementById('go').click();
   });
-  at(14000, function(){
-    say(7,'三套方案：「吃得均衡 / 最省钱 / 轻卡减脂」，先看均衡。');
-    document.getElementById('result').scrollIntoView({behavior:'smooth',block:'start'});
+  at(12800, function(){
+    say(7,'三套方案：吃得均衡 / 最省钱 / 轻卡减脂。');
+    document.getElementById('result').scrollIntoView({block:'start'});
   });
-  at(17400, function(){
-    say(8,'切到「最省钱」——官方算价引擎核过价，更便宜。');
+  at(15200, function(){
+    say(8,'点一下餐品，能看这套里到底有什么——子项来自官方 query-meal-detail。');
+    var el=document.querySelector('#cardBox .item');
+    if(el){ mark(el); el.click(); }
+  });
+  at(18200, function(){
+    say(9,'不顺眼就「换一个」，同类备选自适应，价格立刻重算。');
+    var b=document.getElementById('dishSwap'); if(b){ mark(b); b.click(); }
+  });
+  at(20600, function(){
+    say(10,'切到「最省钱」：同预算下更便宜的一套。');
     var t=document.querySelector('.tab[data-m="cheap"]'); if(t){ mark(t); t.click(); }
   });
-  at(20000, function(){
-    say(9,'再切「轻卡减脂」：只挑热量可核实的低卡主食。');
+  at(23200, function(){
+    say(11,'再切「轻卡减脂」：只挑热量可核实的低卡主食。');
     var t=document.querySelector('.tab[data-m="light"]'); if(t){ mark(t); t.click(); }
   });
-  at(22600, function(){
-    say(10,'每一项都写了选择理由，热量查不到的就标「查不到」，不编数。');
-    mark(null); window.scrollBy({top:520,behavior:'smooth'});
+  at(25800, function(){
+    var t=document.querySelector('.tab[data-m="balanced"]'); if(t){ t.click(); }
+    say(12,'备注也能改——点一下，写成店员看得懂的话。');
+    var n=document.querySelector('.note'); if(n){ mark(n); n.click(); }
   });
-  at(26600, function(){
-    say(11,'底部有 AI 参谋点评，和一键可复制的下单清单。');
-    window.scrollBy({top:700,behavior:'smooth'});
+  at(28600, function(){
+    document.getElementById('noteInput').value='饮品去冰；汉堡去酱';
+    document.getElementById('blockInput').value='牛肉、辣味';
+    var b=document.getElementById('saveNote'); if(b){ mark(b); b.click(); }
   });
-  at(30600, function(){ say(12,'人数 · 预算 · 忌口 —— 把饭点安排明白。'); mark(null); });
+  at(31200, function(){
+    say(13,'改完直接复制清单，到店照着点。');
+    mark(null); window.scrollBy({top:460,behavior:'smooth'});
+  });
+  at(34200, function(){
+    say(14,'人数 · 预算 · 忌口 · 改单 · 备注 —— 把饭点安排明白。');
+    mark(null);
+  });
 })();
 </script>
 </body>

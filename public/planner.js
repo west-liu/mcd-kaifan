@@ -69,7 +69,7 @@ function build({ headcount, budget, prefs, catalog, table, mode, banned }) {
     const kcal = kcalOf(item, table);
     picked.push({
       kind, code: item.code, name: item.name, price: item.price,
-      qty, why, cat: item.cat, kcal,
+      originalPrice: item.originalPrice, qty, why, cat: item.cat, kcal,
     });
     remaining = Math.round((remaining - item.price * qty) * 10) / 10;
   };
