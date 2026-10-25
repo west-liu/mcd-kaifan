@@ -33,16 +33,16 @@
 </p>
 
 <p align="center">
-  <img src="assets/r1.png" width="250" alt="首页：人数 / 预算 / 每人忌口">
-  <img src="assets/r2.png" width="250" alt="结果页：三套方案 + 官方核价小票">
+  <img src="assets/u1.png" width="250" alt="首页：人数 / 预算 / 每人忌口">
+  <img src="assets/u2.png" width="250" alt="结果页：三套方案 + 官方核价小票">
 </p>
 <p align="center">
   <sub>左：三个人、一个预算、每人点忌口 &nbsp;·&nbsp; 右：出方案，每项可点开改，价是官方核过的</sub>
 </p>
 
 <p align="center">
-  <img src="assets/r3.png" width="250" alt="点开看套餐里到底有什么">
-  <img src="assets/r4.png" width="250" alt="麦乐送外送模式">
+  <img src="assets/u3.png" width="250" alt="点开看套餐里到底有什么">
+  <img src="assets/u4.png" width="250" alt="麦乐送外送模式">
 </p>
 <p align="center">
   <sub>左：套餐点开看官方子项构成 &nbsp;·&nbsp; 右：切成外送，参数整条链路跟着变</sub>

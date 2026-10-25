@@ -340,6 +340,54 @@ header{padding:26px 0 18px;}
   .side-brand ul{display:none;}
   .side-brand p{margin-bottom:16px;}
 }
+
+/* ---------- 视觉精修：层次 / 数字 / 质感 ---------- */
+body{-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;}
+
+/* 面板：玻璃层次 + 顶部高光 + 柔和投影 */
+.panel{
+  background:linear-gradient(180deg,rgba(255,255,255,.055),rgba(255,255,255,.028));
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.06),0 14px 34px -18px rgba(0,0,0,.75);
+}
+.ptitle{letter-spacing:.2px;}
+.idx{box-shadow:0 2px 8px rgba(255,199,44,.28);}
+
+/* 门店条：左侧呼吸光条 */
+.storebar{position:relative;overflow:hidden;box-shadow:inset 0 1px 0 rgba(255,255,255,.05);}
+.storebar::before{content:'';position:absolute;left:0;top:0;bottom:0;width:2px;
+  background:linear-gradient(180deg,transparent,var(--mint),transparent);opacity:.7;}
+
+/* 所有数字：等宽对齐，不跳动 */
+.hnum b,.trow b,.trow .mint,.rhead p,.storebar .meta,.tab .s,.blabel span{
+  font-variant-numeric:tabular-nums;font-feature-settings:"tnum";
+}
+
+/* 主 CTA：金属感渐变 + 内高光 */
+.cta{
+  background:linear-gradient(180deg,#FFD45C 0%,var(--gold) 46%,#E8AC14 100%);
+  box-shadow:0 10px 30px rgba(255,199,44,.30),inset 0 1px 0 rgba(255,255,255,.55),inset 0 -1px 0 rgba(120,80,0,.25);
+  transition:transform .12s,box-shadow .12s;
+}
+.cta:active{transform:translateY(1px) scale(.995);box-shadow:0 4px 14px rgba(255,199,44,.24);}
+
+/* 小票：纸张微渐变 + 内阴影，更像真的 */
+.receipt{
+  background:linear-gradient(180deg,#FDF9EE 0%,#FAF3E2 55%,#F5EDD9 100%);
+  box-shadow:0 26px 60px -14px rgba(0,0,0,.62),inset 0 1px 0 #fff,inset 0 -2px 6px rgba(160,140,100,.10);
+}
+
+/* 选中态：描边发光，不刺眼 */
+.chip.on,.tab.on{box-shadow:0 4px 14px rgba(255,199,44,.22);}
+.tag.on,.dopt.on{box-shadow:inset 0 0 0 1px rgba(25,181,122,.25);}
+
+/* 餐品行：桌面端 hover 更明确 */
+.item{transition:background .14s,transform .14s;}
+@media (hover:hover){.item:hover{background:rgba(20,15,5,.045);}}
+.item:active{transform:scale(.995);}
+
+/* 滚动条：细、克制 */
+.result::-webkit-scrollbar{width:6px;}
+.result::-webkit-scrollbar-thumb{background:rgba(255,255,255,.14);border-radius:3px;}
 </style>
 </head>
 <body>
