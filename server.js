@@ -19,7 +19,7 @@ const path = require('path');
 
 const {
   mcp, findStores, resolveStore, getMenu, getNutrition, nutritionFor,
-  priceCheck, getAvailableCoupons, claimAllCoupons, getCampaigns,
+  priceCheck, getAvailableCoupons, getMyCoupons, claimAllCoupons, getCampaigns,
   wayOf, getAddresses, resolveDelivery,
 } = require('./lib/mcd');
 const { planAll, PREF_LABEL } = require('./lib/planner');
@@ -312,10 +312,15 @@ const server = http.createServer(async (req, res) => {
       }
     }
 
-    // 优惠券
+    // 我的卡包（真实拥有的券，和 App 里一致）
     if (p === '/api/coupons') {
+      const list = await getMyCoupons();
+      return send(res, 200, { ok: true, source: 'query-my-coupons', coupons: list });
+    }
+    // 麦麦省可领的券（不是卡包）
+    if (p === '/api/coupons/available') {
       const list = await getAvailableCoupons();
-      return send(res, 200, { ok: true, coupons: list });
+      return send(res, 200, { ok: true, source: 'available-coupons', coupons: list });
     }
     if (p === '/api/coupons/claim' && req.method === 'POST') {
       const r = await claimAllCoupons();

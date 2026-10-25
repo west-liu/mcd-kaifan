@@ -182,6 +182,7 @@ header{padding:26px 0 18px;}
   color:var(--gold);border-radius:10px;padding:10px;font-size:12.5px;font-weight:700;cursor:pointer;}
 .cpimg{display:flex;gap:8px;overflow-x:auto;padding-top:2px;}
 .cpimg img{width:56px;height:56px;border-radius:9px;flex:none;object-fit:cover;background:#0002;}
+.card .dim{color:rgba(237,228,210,.55);font-size:12px;margin:6px 0 0;}
 
 /* 门店选择弹层 */
 .modal{position:fixed;inset:0;z-index:90;background:rgba(12,9,6,.94);display:none;
@@ -1270,8 +1271,14 @@ async function getCampaigns(){
   if (await isLive()) { try { return (await api('/api/campaigns')).campaigns || []; } catch { LIVE = false; } }
   return ((await snapshot()).campaigns) || [];
 }
+/* 我的卡包：query-my-coupons，只包含账号里真正拥有的券 */
 async function getCoupons(){
   if (await isLive()) { try { return (await api('/api/coupons')).coupons || []; } catch { LIVE = false; } }
+  return ((await snapshot()).coupons) || [];
+}
+/* 麦麦省「可领取」的券：available-coupons，未领取前不在卡包里 */
+async function getClaimableCoupons(){
+  if (await isLive()) { try { return (await api('/api/coupons/available')).coupons || []; } catch { LIVE = false; } }
   return ((await snapshot()).coupons) || [];
 }
 let extraLoaded = false;
@@ -1291,22 +1298,31 @@ async function loadExtra(){
     }
   } catch {}
   try {
-    const coupons = await getCoupons();
-    if (coupons.length) {
-      const canGet = coupons.filter(x => x.status === 'CAN_GET');
+    const mine = await getCoupons();
+    const claimable = await getClaimableCoupons().catch(() => []);
+    if (mine.length || claimable.length) {
+      const cpTag = c => (c.labels && c.labels.length ? c.labels[0] : (c.label || ''));
       box.insertAdjacentHTML('beforeend', `
         <div class="card">
-          <h4><span class="b g">麦麦省</span>卡包里的券（${coupons.length} 张）</h4>
-          <div class="cpimg">${coupons.slice(0, 8).map(x =>
-            `<img src="${x.image}" alt="${x.name}" title="${x.name} · ${x.label}">`).join('')}</div>
-          <ul>${coupons.slice(0, 4).map(x => `<li><b>${x.name}</b> · ${x.label}</li>`).join('')}</ul>
-          ${canGet.length && plan && plan.live ? `<button class="btn2" id="claimBtn">一键领取 ${canGet.length} 张可领券</button>` : ''}
+          <h4><span class="b g">麦麦省</span>我的卡包（${mine.length} 张）</h4>
+          ${mine.length
+            ? `<div class="cpimg">${mine.slice(0, 8).map(x =>
+                `<img src="${x.image}" alt="${x.name}" title="${x.name}">`).join('')}</div>
+               <ul>${mine.slice(0, 4).map(x =>
+                 `<li><b>${x.name}</b>${x.price ? ` · ${x.price}` : ''}${cpTag(x) ? ` · ${cpTag(x)}` : ''}${x.until ? `<span class="dim">（${x.until}）</span>` : ''}</li>`).join('')}</ul>`
+            : `<p class="dim">卡包里暂时没有券</p>`}
+          ${claimable.length ? `<p class="dim">麦麦省还有 ${claimable.length} 张可领：${claimable.slice(0, 3).map(x => x.name).join('、')}${claimable.length > 3 ? ' 等' : ''}</p>
+          <button class="btn2" id="claimBtn">一键领取 ${claimable.length} 张</button>` : ''}
         </div>`);
       const cb = $('claimBtn');
       if (cb) cb.onclick = async () => {
         cb.disabled = true; cb.textContent = '领取中…';
-        try { const r = await api('/api/coupons/claim', { method: 'POST' }); toast(r.ok ? '已提交领取' : '领取未完成'); }
-        catch (e) { toast('领取失败：' + e.message); }
+        try {
+          const r = await api('/api/coupons/claim', { method: 'POST' });
+          toast(r.ok ? '已提交领取，稍后卡片里就能看到' : '领取未完成');
+          extraLoaded = false;
+          setTimeout(() => { const c = $('extraBox'); if (c) c.innerHTML = ''; loadExtra(); }, 1200);
+        } catch (e) { toast('领取失败：' + e.message); }
       };
     }
   } catch {}
