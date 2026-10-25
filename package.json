@@ -1,0 +1,16 @@
+{
+  "name": "mcd-kaifan",
+  "version": "1.0.0",
+  "private": true,
+  "description": "开饭参谋 —— 基于麦当劳官方 MCP 的团餐搭配助手",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "snapshot": "node tools/snapshot.js",
+    "build": "node tools/build-web.js && node tools/build-single.js && node tools/build-demo.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {}
+}
