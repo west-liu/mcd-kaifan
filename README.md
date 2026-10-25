@@ -17,12 +17,17 @@
 
 | 入口 | 链接 | 说明 |
 | --- | --- | --- |
-| **在线作品** | **https://west-liu.github.io/mcd-kaifan/** | 打开就能用，无需安装、无需 Token |
-| **自动演示** | **https://west-liu.github.io/mcd-kaifan/demo.html** | 14 步自动走完，适合不看说明直接看效果 |
-| **使用说明** | [https://west-liu.github.io/mcd-kaifan/usage.html](https://west-liu.github.io/mcd-kaifan/usage.html) | 30 秒上手 |
+| **主测试链接** | **https://west-liu.github.io/mcd-kaifan/** | 比赛提交地址，打开就能用，无需安装、无需 Token |
+| **备用测试链接** | **https://kaifan.waymate.vip/** | 同代码同后端；国内访问 GitHub 超时时用这个 |
+| **自动演示** | [https://west-liu.github.io/mcd-kaifan/demo.html](https://west-liu.github.io/mcd-kaifan/demo.html) | 14 步自动走完，适合不看说明直接看效果 |
+| **使用手册** | 页面右下角「使用手册」按钮 | 上手步骤、口令用法、支付规则都在里面 |
 
-> 在线版是单文件网页，数据来自官方 MCP 快照（浏览器直连 MCP 会被 CORS 拦）。
-> 要看「实时调 MCP」，跑本地或 Docker 版，见下方**快速开始**。
+**真下单演示口令：`kf-ae182690`**
+
+> 点「让 MCP 真下单」后会弹出输入框，填这个口令即可；同一台设备只需输入一次。
+> 口令只保护「真实下单」，浏览门店、菜单、核价、方案都不需要口令。
+
+> 在线版直连真实后端（Docker 常驻，由官方 MCP 返回实时门店、菜单、核价、下单与支付二维码），不再使用快照数据。
 
 ---
 
