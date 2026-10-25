@@ -1,0 +1,5 @@
+.env
+node_modules/
+*.log
+.DS_Store
+tools/_inline_check.js

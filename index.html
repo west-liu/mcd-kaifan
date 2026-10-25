@@ -1,0 +1,1029 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#17120C">
+<title>开饭参谋 · 报人数、报预算，摆好一桌麦当劳</title>
+<style>
+:root{
+  --bg:#17120C; --bg2:#211A11;
+  --paper:#FBF5E6; --ink:#1B1712; --dim:#9C927F;
+  --gold:#FFC72C; --red:#DA291C; --mint:#19B57A;
+  --line:rgba(255,255,255,.10);
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;
+  background:
+    radial-gradient(900px 520px at 50% -12%, #2E2314 0%, transparent 70%),
+    radial-gradient(620px 420px at 105% 100%, #20281C 0%, transparent 62%),
+    var(--bg);
+  color:var(--paper); min-height:100vh; padding:0 0 118px; -webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:480px;margin:0 auto;padding:0 18px;}
+
+/* ---------- 头部 ---------- */
+header{padding:26px 0 18px;}
+.brand{font-size:31px;font-weight:800;letter-spacing:2px;line-height:1.1;}
+.brand b{color:var(--gold);}
+.stamp{
+  display:inline-block;margin-left:9px;vertical-align:8px;font-size:10px;letter-spacing:1px;
+  font-weight:700;color:var(--gold);border:1.5px solid var(--gold);border-radius:3px;
+  padding:2px 6px;transform:rotate(-6deg);
+}
+.tagline{margin-top:9px;font-size:12.5px;color:var(--dim);letter-spacing:.4px;line-height:1.65;}
+.tagline i{font-style:normal;color:var(--gold);}
+
+/* ---------- 门店条 ---------- */
+.storebar{
+  display:flex;align-items:center;gap:9px;background:rgba(255,255,255,.05);
+  border:1px solid var(--line);border-radius:13px;padding:11px 13px;margin-bottom:13px;
+}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--mint);flex:none;box-shadow:0 0 8px var(--mint);}
+.storebar .nm{flex:1;font-size:13px;font-weight:600;line-height:1.35;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.storebar .chg{font-size:11px;color:var(--gold);font-weight:700;flex:none;padding:4px 2px;}
+.storebar .meta{display:block;font-size:10.5px;color:var(--dim);font-weight:400;margin-top:2px;font-family:ui-monospace,Menlo,monospace;}
+
+/* ---------- 面板 ---------- */
+.panel{
+  background:rgba(255,255,255,.045);border:1px solid var(--line);
+  border-radius:18px;padding:16px 16px 18px;margin-bottom:13px;
+}
+.ptitle{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:700;color:#EDE4D2;margin-bottom:14px;}
+.idx{font-size:10px;font-weight:800;color:#2A1C05;background:var(--gold);border-radius:4px;
+  padding:2px 5px;letter-spacing:.5px;font-family:ui-monospace,Menlo,monospace;}
+.ptitle small{margin-left:auto;font-weight:400;font-size:11px;color:var(--dim);}
+
+.stepper{display:flex;align-items:center;justify-content:space-between;gap:12px;}
+.sbtn{width:52px;height:52px;border-radius:16px;border:1px solid var(--line);
+  background:rgba(255,255,255,.06);color:var(--paper);font-size:24px;font-weight:300;
+  display:flex;align-items:center;justify-content:center;cursor:pointer;}
+.sbtn:active{background:var(--gold);border-color:var(--gold);color:#2A1C05;}
+.hnum{flex:1;text-align:center;}
+.hnum b{font-size:42px;font-weight:800;font-family:ui-monospace,Menlo,monospace;letter-spacing:-1px;}
+.hnum span{font-size:13px;color:var(--dim);margin-left:4px;}
+
+.chips{display:flex;flex-wrap:wrap;gap:8px;}
+.chip{font-size:13px;padding:8px 13px;border-radius:10px;border:1px solid var(--line);
+  background:rgba(255,255,255,.04);color:#D8CDB8;cursor:pointer;user-select:none;transition:.15s;}
+.chip.on{background:var(--gold);border-color:var(--gold);color:#2A1C05;font-weight:700;}
+.custom{display:flex;align-items:center;gap:8px;margin-top:10px;}
+.custom input{flex:1;background:rgba(255,255,255,.05);border:1px solid var(--line);
+  border-radius:10px;padding:11px 13px;color:var(--paper);font-size:15px;outline:none;
+  font-family:ui-monospace,Menlo,monospace;}
+.custom input:focus{border-color:var(--gold);}
+.custom span{font-size:12px;color:var(--dim);}
+
+.person{border-top:1px dashed var(--line);padding:12px 0 2px;}
+.person:first-child{border-top:0;padding-top:0;}
+.pname{font-size:12px;color:var(--dim);margin-bottom:8px;font-family:ui-monospace,Menlo,monospace;}
+.pname em{font-style:normal;color:var(--mint);}
+.tags{display:flex;flex-wrap:wrap;gap:6px;}
+.tag{font-size:12px;padding:6px 10px;border-radius:8px;border:1px solid var(--line);
+  background:transparent;color:#B7AC98;cursor:pointer;transition:.15s;}
+.tag.on{background:rgba(25,181,122,.15);border-color:var(--mint);color:var(--mint);font-weight:600;}
+
+.bar{position:fixed;left:0;right:0;bottom:0;padding:13px 18px calc(13px + env(safe-area-inset-bottom));
+  background:linear-gradient(to top,var(--bg) 55%,transparent);z-index:20;}
+.cta{width:100%;max-width:480px;margin:0 auto;display:block;background:var(--gold);color:#2A1C05;
+  border:none;border-radius:16px;padding:16px;font-size:16px;font-weight:800;letter-spacing:1px;
+  box-shadow:0 8px 28px rgba(255,199,44,.26);cursor:pointer;}
+.cta:active{transform:scale(.99);opacity:.9;}
+.cta small{display:block;font-size:11px;font-weight:500;letter-spacing:.5px;opacity:.75;margin-top:3px;}
+
+/* ---------- 结果 ---------- */
+.result{position:fixed;inset:0;z-index:60;background:var(--bg);overflow-y:auto;
+  -webkit-overflow-scrolling:touch;display:none;padding:16px 14px 130px;}
+.result.on{display:block;}
+.rwrap{max-width:460px;margin:0 auto;}
+
+.tabs{display:flex;gap:7px;margin-bottom:13px;}
+.tab{flex:1;text-align:center;padding:11px 6px;border-radius:13px;border:1px solid var(--line);
+  background:rgba(255,255,255,.04);cursor:pointer;transition:.15s;}
+.tab .t{font-size:13px;font-weight:700;color:#CFC4AE;display:block;}
+.tab .s{font-size:11px;color:var(--dim);font-family:ui-monospace,Menlo,monospace;margin-top:3px;display:block;}
+.tab.on{background:var(--gold);border-color:var(--gold);}
+.tab.on .t{color:#2A1C05;}
+.tab.on .s{color:#6B5406;}
+
+.receipt{position:relative;background:var(--paper);color:var(--ink);border-radius:2px;
+  padding:24px 19px 20px;box-shadow:0 22px 56px rgba(0,0,0,.55);}
+.receipt::before,.receipt::after{content:'';position:absolute;left:0;right:0;height:10px;
+  background-size:10px 10px;background-repeat:repeat-x;}
+.receipt::before{top:-9px;background-image:radial-gradient(circle at 5px 10px,var(--paper) 5px,transparent 5.5px);}
+.receipt::after{bottom:-9px;background-image:radial-gradient(circle at 5px 0,var(--paper) 5px,transparent 5.5px);}
+
+.rhead{text-align:center;padding-bottom:12px;}
+.rhead h2{font-size:14.5px;font-weight:800;letter-spacing:.5px;}
+.rhead p{font-size:11px;color:#8A806C;margin-top:5px;font-family:ui-monospace,Menlo,monospace;}
+.dash{border-top:1.5px dashed #C9BFA6;margin:13px -4px;}
+.dash.thin{border-top-width:1px;}
+
+.sec{margin:15px 0 5px;display:flex;align-items:baseline;gap:7px;}
+.sec .k{font-size:9.5px;font-weight:800;letter-spacing:1.5px;color:#8A806C;font-family:ui-monospace,Menlo,monospace;}
+.sec .n{font-size:13px;font-weight:800;}
+.item{padding:7px 0 8px;}
+.item .row{display:flex;align-items:baseline;gap:8px;}
+.item .nm{flex:1;font-size:14px;font-weight:600;line-height:1.35;}
+.item .q{font-size:11px;color:#8A806C;font-family:ui-monospace,Menlo,monospace;margin-right:2px;}
+.item .pr{font-size:14px;font-weight:800;font-family:ui-monospace,Menlo,monospace;}
+.item .why{font-size:11px;color:#8A806C;line-height:1.5;margin-top:3px;}
+.item .why::before{content:'↳ ';opacity:.55;}
+.kc{font-size:10px;color:#A2957C;font-family:ui-monospace,Menlo,monospace;margin-left:5px;font-weight:600;}
+
+.tot{padding-top:4px;}
+.trow{display:flex;justify-content:space-between;align-items:baseline;font-size:13px;padding:4px 0;color:#5A5241;}
+.trow b{font-size:26px;font-weight:800;color:var(--ink);font-family:ui-monospace,Menlo,monospace;letter-spacing:-1px;}
+.trow.hl b{color:var(--red);}
+.trow .mint{color:#0F8C5C;font-weight:800;font-family:ui-monospace,Menlo,monospace;}
+.trow .strike{text-decoration:line-through;color:#A2957C;}
+
+.bbar{height:7px;border-radius:4px;background:#E4DAC3;overflow:hidden;margin:9px 0 5px;}
+.bbar i{display:block;height:100%;background:linear-gradient(90deg,var(--mint),var(--gold));border-radius:4px;}
+.blabel{display:flex;justify-content:space-between;font-size:10px;color:#8A806C;
+  font-family:ui-monospace,Menlo,monospace;}
+
+.note{margin-top:13px;background:#F0E7D2;border-left:3px solid var(--gold);border-radius:6px;
+  padding:10px 12px;font-size:12px;line-height:1.6;color:#5A5241;}
+.note b{color:var(--ink);}
+.stamp2{
+  margin-top:12px;text-align:center;font-size:10px;color:#8A806C;letter-spacing:.5px;
+  font-family:ui-monospace,Menlo,monospace;border-top:1px dashed #C9BFA6;padding-top:10px;
+}
+
+.ai{margin-top:13px;background:#1B1712;border-radius:12px;padding:13px;color:#EFE6D3;
+  font-size:13px;line-height:1.7;}
+.ai .lbl{font-size:9px;letter-spacing:1.5px;font-weight:800;color:#0B2419;background:var(--mint);
+  border-radius:3px;padding:2px 5px;margin-right:6px;vertical-align:1px;font-family:ui-monospace,Menlo,monospace;}
+.ai.loading{color:#8F8672;}
+.ai.loading::after{content:'▍';animation:blink 1s steps(2) infinite;color:var(--mint);}
+@keyframes blink{50%{opacity:0;}}
+
+.acts{display:flex;gap:9px;margin-top:16px;}
+.acts button{flex:1;border-radius:13px;padding:13px;font-size:13.5px;font-weight:700;border:none;cursor:pointer;}
+.acts .again{background:rgba(255,255,255,.08);color:var(--paper);border:1px solid var(--line);}
+.acts .copy{background:var(--mint);color:#08251A;}
+.acts .order{background:var(--red);color:#fff;}
+
+/* 活动 / 券 */
+.extra{margin-top:14px;}
+.card{background:rgba(255,255,255,.045);border:1px solid var(--line);border-radius:15px;padding:14px 15px;margin-bottom:11px;}
+.card h4{font-size:12.5px;font-weight:800;color:#EDE4D2;margin-bottom:10px;display:flex;align-items:center;gap:7px;}
+.card h4 .b{font-size:9px;font-weight:800;background:var(--red);color:#fff;border-radius:3px;
+  padding:2px 5px;letter-spacing:.5px;font-family:ui-monospace,Menlo,monospace;}
+.card h4 .b.g{background:var(--mint);}
+.card ul{list-style:none;}
+.card li{font-size:12px;color:#B7AC98;line-height:1.6;padding:5px 0;border-top:1px dashed var(--line);}
+.card li:first-child{border-top:0;}
+.card li b{color:#EDE4D2;font-weight:600;}
+.card .btn2{margin-top:9px;width:100%;background:rgba(255,199,44,.14);border:1px solid rgba(255,199,44,.4);
+  color:var(--gold);border-radius:10px;padding:10px;font-size:12.5px;font-weight:700;cursor:pointer;}
+.cpimg{display:flex;gap:8px;overflow-x:auto;padding-top:2px;}
+.cpimg img{width:56px;height:56px;border-radius:9px;flex:none;object-fit:cover;background:#0002;}
+
+/* 门店选择弹层 */
+.modal{position:fixed;inset:0;z-index:90;background:rgba(12,9,6,.94);display:none;
+  align-items:flex-end;justify-content:center;}
+.modal.on{display:flex;}
+.sheet{width:100%;max-width:480px;background:var(--bg2);border-radius:20px 20px 0 0;
+  padding:18px 18px calc(18px + env(safe-area-inset-bottom));max-height:78vh;overflow-y:auto;}
+.sheet h3{font-size:15px;font-weight:800;margin-bottom:12px;display:flex;align-items:center;gap:8px;}
+.sheet h3 .x{margin-left:auto;font-size:20px;color:var(--dim);cursor:pointer;font-weight:300;line-height:1;}
+.srow{display:flex;gap:9px;margin-bottom:11px;}
+.srow input{flex:1;background:rgba(255,255,255,.06);border:1px solid var(--line);border-radius:11px;
+  padding:11px 13px;color:var(--paper);font-size:14px;outline:none;}
+.srow button{background:var(--gold);color:#2A1C05;border:none;border-radius:11px;padding:0 16px;
+  font-weight:800;font-size:13px;cursor:pointer;}
+.slist{margin-top:6px;}
+.sitem{padding:11px 12px;border-radius:12px;border:1px solid var(--line);margin-bottom:8px;cursor:pointer;}
+.sitem.on{border-color:var(--gold);background:rgba(255,199,44,.09);}
+.sitem .n{font-size:13px;font-weight:600;}
+.sitem .a{font-size:11px;color:var(--dim);margin-top:3px;line-height:1.5;}
+.sitem .c{font-size:10px;color:#6E6553;font-family:ui-monospace,Menlo,monospace;margin-top:3px;}
+
+.loading{position:fixed;inset:0;z-index:120;background:rgba(23,18,12,.95);display:none;
+  align-items:center;justify-content:center;flex-direction:column;gap:16px;}
+.loading.on{display:flex;}
+.ring{width:42px;height:42px;border:3px solid rgba(255,255,255,.12);border-top-color:var(--gold);
+  border-radius:50%;animation:spin .8s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.loading p{font-size:12.5px;color:var(--dim);letter-spacing:.8px;}
+.loading .sub{font-size:10.5px;color:#6E6553;font-family:ui-monospace,Menlo,monospace;}
+
+.toast{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(251,245,230,.97);
+  color:var(--ink);padding:12px 20px;border-radius:10px;font-size:13px;font-weight:600;z-index:200;
+  display:none;box-shadow:0 10px 30px rgba(0,0,0,.4);max-width:80%;text-align:center;}
+.toast.on{display:block;}
+
+.confirm{position:fixed;inset:0;z-index:150;background:rgba(10,7,4,.9);display:none;
+  align-items:center;justify-content:center;padding:24px;}
+.confirm.on{display:flex;}
+.cbox{background:var(--bg2);border:1px solid var(--line);border-radius:16px;padding:20px;max-width:340px;}
+.cbox h4{font-size:15px;font-weight:800;margin-bottom:10px;}
+.cbox p{font-size:12.5px;color:#B7AC98;line-height:1.65;margin-bottom:16px;}
+.cbox .row2{display:flex;gap:9px;}
+.cbox .row2 button{flex:1;padding:12px;border-radius:11px;font-size:13px;font-weight:700;border:none;cursor:pointer;}
+.cbox .no{background:rgba(255,255,255,.08);color:#CFC4AE;}
+.cbox .yes{background:var(--red);color:#fff;}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header>
+    <div class="brand">开饭<b>参谋</b><span class="stamp">MCP</span></div>
+    <div class="tagline">报人数、报预算、报忌口 —— <i>30 秒摆好一桌</i>。<br>每一单都交给麦当劳官方算价引擎核过价。</div>
+  </header>
+
+  <div class="storebar" id="storeBar">
+    <span class="dot"></span>
+    <div class="nm" id="storeName">正在连接门店…<span class="meta" id="storeMeta">MCP</span></div>
+    <div class="chg" id="changeStore">换店 ›</div>
+  </div>
+
+  <section class="panel">
+    <div class="ptitle"><span class="idx">01</span>几个人吃<small>到店自取</small></div>
+    <div class="stepper">
+      <div class="sbtn" id="minus">−</div>
+      <div class="hnum"><b id="hc">3</b><span>人</span></div>
+      <div class="sbtn" id="plus">＋</div>
+    </div>
+  </section>
+
+  <section class="panel">
+    <div class="ptitle"><span class="idx">02</span>一共多少预算<small>含税总价</small></div>
+    <div class="chips" id="budgetChips">
+      <div class="chip" data-v="40">¥40</div>
+      <div class="chip" data-v="60">¥60</div>
+      <div class="chip on" data-v="90">¥90</div>
+      <div class="chip" data-v="150">¥150</div>
+    </div>
+    <div class="custom">
+      <input id="budgetInput" type="number" min="20" max="2000" value="90" inputmode="numeric">
+      <span>元 · 可改</span>
+    </div>
+  </section>
+
+  <section class="panel">
+    <div class="ptitle"><span class="idx">03</span>谁有讲究<small>忌口按人分开算</small></div>
+    <div id="people"></div>
+  </section>
+</div>
+
+<div class="bar"><button class="cta" id="go">开饭参谋 · 摆一桌<small id="goSub">3 人 · ¥90 · 暂无忌口</small></button></div>
+
+<div class="result" id="result"><div class="rwrap" id="rwrap"></div></div>
+
+<div class="modal" id="storeModal">
+  <div class="sheet">
+    <h3>选一家门店<span class="x" id="closeStore">×</span></h3>
+    <div class="srow">
+      <input id="cityInput" placeholder="城市或关键词，如 广州 / 天源路">
+      <button id="searchStore">搜</button>
+    </div>
+    <div class="slist" id="storeList"><div class="sitem"><div class="n">加载中…</div></div></div>
+  </div>
+</div>
+
+<div class="confirm" id="confirmBox">
+  <div class="cbox">
+    <h4>真的要下单吗？</h4>
+    <p id="confirmText">这会通过麦当劳 MCP 创建一笔<b>真实订单</b>，需要到店取餐并完成支付。请确认金额无误。</p>
+    <div class="row2">
+      <button class="no" id="confirmNo">再想想</button>
+      <button class="yes" id="confirmYes">确认下单</button>
+    </div>
+  </div>
+</div>
+
+<div class="loading" id="loading">
+  <div class="ring"></div>
+  <p>参谋正在翻菜单、核价格…</p>
+  <div class="sub" id="loadSub">query-meals → calculate-price</div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+
+// 由 tools/build-web.js 从 lib/planner.js 自动生成，请勿手改
+(function (global) {
+const COMBO_SUFFIX = /(三件套|四件套|二件套|五件套|套餐|随心配|单人餐|分享餐|双人餐|多人餐|早餐|组合)$/;
+function baseName(name) { return (name || '').replace(COMBO_SUFFIX, '').trim(); }
+function matchNutrition(name, table) {
+  if (!name || !table || !table.size) return null;
+  if (table.has(name)) return table.get(name);
+  const b = baseName(name);
+  if (b && b !== name && table.has(b)) return table.get(b);
+  let best = null, bestLen = 0;
+  for (const key of table.keys()) {
+    if (name.includes(key) || key.includes(name) || (b && (b.includes(key) || key.includes(b)))) {
+      if (key.length > bestLen) { best = table.get(key); bestLen = key.length; }
+    }
+  }
+  return best;
+}
+
+// 搭配引擎：按「人数 / 预算 / 每个人的忌口」生成多套方案，并估算热量
+
+const PREF_LABEL = {
+  diet: '减脂', nobeef: '不吃牛肉', nospicy: '不吃辣',
+  nofried: '不吃炸物', veggie: '素食', nosaucce: '不要酱', noice: '去冰',
+};
+
+// 牛肉/辣/炸物是「全桌硬约束」，减脂/素食是「个人诉求」
+const AVOID_RULES = {
+  nobeef: /牛|安格斯|巨无霸|吉士汉堡|培根/,
+  nospicy: /辣|龙焰|韩式辣椒|椒盐|咖喱/,
+  nofried: /炸|脆|鸡块|鸡翅|鸡排|薯|V翅|鸡柳|芝士条/,
+};
+const MEAT_RE = /鸡|翅|肉|鱼|虾|排|牛|猪|蟹|堡|鳕/;
+const ZERO_SUGAR_RE = /无糖|纯悦|美式|鲜萃|锡兰|黑咖|浓缩/;
+const CAT_500 = '500大卡套餐';
+const HAS_DRINK_RE = /件套|套餐|随心配|分享餐|双人餐|多人餐/;
+
+function blocked(item, set) {
+  const text = `${item.name} ${item.cat || ''} ${(item.tags || []).join(' ')}`;
+  for (const k of Object.keys(AVOID_RULES)) {
+    if (set.has(k) && AVOID_RULES[k].test(text)) return k;
+  }
+  return null;
+}
+
+const unionOf = (prefs) => new Set(prefs.flat().filter((p) => AVOID_RULES[p]));
+
+function kcalOf(item, table) {
+  if (item && item.kcal != null) return item.kcal;   // 快照里预拆好的组合餐热量
+  const n = matchNutrition(item.name, table);
+  return n ? n.kcal : null;
+}
+// 排序用：热量未知的按一顿普通快餐估算，不能当成"很低"也不能当成"极高"
+const kcalRank = (item, table) => {
+  const k = kcalOf(item, table);
+  return k == null ? 550 : k;
+};
+const LIGHT_CAP = 620;   // 单份主食的热量上限（轻卡模式）
+
+function build({ headcount, budget, prefs, catalog, table, mode, banned }) {
+  const per = budget / headcount;
+  const avoid = unionOf(prefs);
+  const skip = banned || new Set();
+  const picked = [];
+  const notes = [];
+  let remaining = budget;
+
+  const add = (kind, item, qty, why) => {
+    const kcal = kcalOf(item, table);
+    picked.push({
+      kind, code: item.code, name: item.name, price: item.price,
+      qty, why, cat: item.cat, kcal,
+    });
+    remaining = Math.round((remaining - item.price * qty) * 10) / 10;
+  };
+
+  const poolOf = (kind) => (catalog[kind] || [])
+    .filter((x) => !blocked(x, avoid) && !skip.has(x.code));
+
+  // —— 1) 主食位：2 人以上优先分享餐，人均更低（省钱模式最激进）——
+  const covered = new Set();
+  const eligible = [];
+  for (let i = 0; i < headcount; i++) {
+    const my = new Set(prefs[i] || []);
+    if (!my.has('diet') && !my.has('veggie')) eligible.push(i);
+  }
+
+  const wantShare = mode === 'cheap' ? headcount >= 2 : (mode === 'balanced' ? headcount >= 2 : headcount >= 3);
+  if (wantShare && eligible.length >= 2) {
+    const pool = poolOf('share')
+      .filter((x) => x.price / 2 <= per * (mode === 'cheap' ? 1.0 : 0.95))
+      .sort((a, b) => (mode === 'cheap' ? a.price / 2 - b.price / 2 : b.price - a.price));
+    while (eligible.length >= 2 && pool.length) {
+      const s = pool.shift();
+      const rest = headcount - covered.size - 2;
+      if (s.price > remaining - rest * 12) continue;
+      const save = s.originalPrice > s.price ? `，原价 ¥${s.originalPrice}` : '';
+      add('share', s, 1, `2 人份组合${save}，人均 ¥${(s.price / 2).toFixed(1)}，比两份单点更省`);
+      covered.add(eligible.shift());
+      covered.add(eligible.shift());
+      if (mode !== 'cheap') break; // 均衡/轻卡只放一份，保留个人选择空间
+    }
+  }
+
+  // —— 2) 其余人各配主食 ——
+  for (let i = 0; i < headcount; i++) {
+    if (covered.has(i)) continue;
+    const myPrefs = new Set(prefs[i] || []);
+    const diet = myPrefs.has('diet') || mode === 'light';
+    const veg = myPrefs.has('veggie');
+
+    let pool = poolOf('main').filter((x) => !blocked(x, myPrefs));
+    if (veg || !pool.length) {
+      const alt = poolOf('side').filter((x) => !MEAT_RE.test(x.name));
+      const pick = alt.filter((x) => x.price <= per * 0.6).pop() || alt[0];
+      if (pick) { add('main', pick, 1, '素食：主食位换成非肉类小食'); continue; }
+      notes.push('有人吃素，这家店可选素食有限');
+      continue;
+    }
+
+    let cand;
+    // 主食预算：给共享小食和饮品留出空间，套餐自带配餐的可以放宽
+    const capOf = (x) => Math.min(per * (HAS_DRINK_RE.test(x.name) ? 0.9 : 0.7), remaining);
+
+    if (diet || mode === 'light') {
+      // 减脂：只认「有热量数据且够低」的主食；500 大卡专区优先
+      const zone = pool.filter((x) => x.cat === CAT_500)
+        .filter((x) => kcalRank(x, table) <= LIGHT_CAP);
+      const low = pool
+        .filter((x) => kcalOf(x, table) != null && kcalOf(x, table) <= LIGHT_CAP)
+        .sort((a, b) => kcalOf(a, table) - kcalOf(b, table));
+      // 合并去重（专区优先）
+      const seen = new Set();
+      const src = [];
+      for (const x of [...zone, ...low]) {
+        if (!seen.has(x.code)) { seen.add(x.code); src.push(x); }
+      }
+      if (!src.length) {
+        if (mode === 'light') {
+          // 轻卡模式：一个可靠的低卡主食都没有，这套方案不成立
+          notes.push('这家店没有可核实的低卡主食，轻卡方案不成立');
+          return finish(picked, headcount, budget, prefs, avoid, notes, mode, { lightOk: false });
+        }
+        // 均衡/省钱模式里有人要减脂：尽力挑热量最低的，但如实标注热量无法保证
+        const fallback = pool.slice().sort((a, b) => kcalRank(a, table) - kcalRank(b, table));
+        cand = fallback.filter((x) => x.price <= per)[0] || fallback[0];
+        if (cand) notes.push('这家店没有可核实的低卡主食，减脂那位按热量相对最低的搭配');
+      } else {
+        const afford = src.filter((x) => x.price <= Math.min(remaining, per * 1.0));
+        cand = afford[0] || src[0];
+      }
+    } else if (mode === 'cheap') {
+      cand = pool.filter((x) => x.price <= per * 1.05).sort((a, b) => {
+        // 套餐自带小食饮品，实际单价更划算，优先
+        const sa = HAS_DRINK_RE.test(a.name) ? -3 : 0;
+        const sb = HAS_DRINK_RE.test(b.name) ? -3 : 0;
+        return (a.price + sa) - (b.price + sb);
+      })[0];
+    } else {
+      // 均衡：预算内按价格降序轮转，让几个人拿到不同价位，不重复
+      const inCap = pool.filter((x) => x.price <= capOf(x));
+      const src = inCap.length ? inCap.slice().sort((a, b) => b.price - a.price) : [pool[0]];
+      cand = src[Math.min(i, src.length - 1)];
+    }
+    if (!cand) cand = pool[0];
+    if (!cand) { notes.push('菜单里没有符合忌口的主食'); continue; }
+    if (cand.price > remaining) notes.push('预算偏紧，主食按最低价保留');
+
+    const k = kcalOf(cand, table);
+    const why = diet
+      ? (k ? `约 ${k} 大卡，热量可控` : '来自低热量专区')
+      : (HAS_DRINK_RE.test(cand.name) ? '主食+小食+饮品一套齐，单人最省事' : '单品主食，把预算留给共享小食');
+    add('main', cand, 1, why);
+  }
+
+  // —— 3) 共享小食 ——
+  const sideWanted = mode === 'cheap' ? (headcount >= 4 ? 1 : 1) : (budget >= 80 && headcount >= 3 ? 2 : 1);
+  const sidePool = poolOf('side').filter((x) => mode !== 'light' || !/薯|炸|脆/.test(x.name));
+  for (let i = 0; i < sideWanted; i++) {
+    const cap = Math.min(remaining * 0.6, per * (mode === 'cheap' ? 0.8 : 1.1));
+    const cand = sidePool.filter((x) => x.price <= cap).pop() || (mode === 'cheap' ? null : sidePool[0]);
+    if (!cand || cand.price > remaining) break;
+    add('side', cand, 1, `全桌共享 ¥${cand.price}，${mode === 'cheap' ? '控制在人均预算内' : '分摊下来很划算'}`);
+    sidePool.splice(sidePool.indexOf(cand), 1);
+  }
+
+  // —— 4) 饮品：套餐已含的不重复点 ——
+  const drinkCovered = picked.reduce(
+    (n, p) => n + (HAS_DRINK_RE.test(p.name) ? p.qty * (p.kind === 'share' ? 2 : 1) : 0), 0,
+  );
+  let needDrink = Math.max(0, headcount - drinkCovered);
+  if (needDrink > 0) {
+    let drinkPool = poolOf('drink');
+    if (mode === 'light' || prefs.some((p) => p.includes('diet'))) {
+      const zero = drinkPool.filter((x) => ZERO_SUGAR_RE.test(x.name));
+      if (zero.length) drinkPool = zero;
+    }
+    for (let i = 0; i < needDrink; i++) {
+      const cand = drinkPool.filter((x) => x.price <= remaining).shift();
+      if (!cand) { notes.push('饮品预算不够，可以自带或加 ¥10 补一杯'); break; }
+      const k = kcalOf(cand, table);
+      add('drink', cand, 1, k === 0 ? '0 卡饮品，不增加热量负担' : (k ? `约 ${k} 大卡，补齐每人一杯` : '补齐每人一杯'));
+      drinkPool.splice(drinkPool.indexOf(cand), 1);
+    }
+  }
+
+  // —— 5) 甜品：轻卡模式跳过 ——
+  if (mode !== 'light' && headcount >= 2 && remaining >= 9) {
+    const dPool = poolOf('dessert').filter((x) => x.price <= remaining - 4);
+    const d = dPool.pop();
+    if (d) add('dessert', d, 1, `还剩 ¥${remaining.toFixed(1)} 余量，加一份甜品收尾`);
+  }
+
+  return finish(picked, headcount, budget, prefs, avoid, notes, mode, { lightOk: true });
+}
+
+const MODE_NAME = { balanced: '吃得均衡', cheap: '最省钱', light: '轻卡减脂' };
+
+// 汇总一套方案
+function finish(picked, headcount, budget, prefs, avoid, notes, mode, extra) {
+  const total = Math.round(picked.reduce((n, p) => n + p.price * p.qty, 0) * 10) / 10;
+  const kcalList = picked.map((p) => (p.kcal == null ? null : p.kcal * p.qty));
+  const kcalKnown = kcalList.filter((x) => x != null);
+  const totalKcal = kcalKnown.length ? Math.round(kcalList.reduce((a, b) => (a || 0) + (b || 0), 0)) : null;
+  const kcalFull = kcalKnown.length === kcalList.length;
+
+  const noteParts = [];
+  if (prefs.some((p) => p.includes('nosaucce'))) noteParts.push('汉堡/炸鸡去酱');
+  if (prefs.some((p) => p.includes('noice'))) noteParts.push('饮品去冰');
+  if (prefs.some((p) => p.includes('nospicy'))) noteParts.push('不要辣味酱');
+
+  const blockedList = [];
+  if (avoid.has('nobeef')) blockedList.push('牛肉');
+  if (avoid.has('nospicy')) blockedList.push('辣味');
+  if (avoid.has('nofried')) blockedList.push('炸物');
+  if (prefs.some((p) => p.includes('veggie'))) blockedList.push('素食者本人不吃肉');
+
+  return {
+    mode, modeName: MODE_NAME[mode],
+    items: picked,
+    total,
+    originalTotal: Math.round(picked.reduce((n, p) => n + (p.originalPrice || p.price) * p.qty, 0) * 10) / 10,
+    perPerson: Math.round((total / headcount) * 10) / 10,
+    leftover: Math.round((budget - total) * 10) / 10,
+    usage: Math.round((total / budget) * 100),
+    totalKcal, kcalFull,
+    kcalPerPerson: totalKcal ? Math.round(totalKcal / headcount) : null,
+    orderNote: noteParts.length ? noteParts.join('；') : '无特殊备注',
+    blockedList, notes,
+    lightOk: extra?.lightOk !== false,
+  };
+}
+
+// 生成候选方案：超预算、假轻卡的直接淘汰
+function planAll({ headcount, budget, prefs, catalog, table, banned }) {
+  const modes = ['balanced', 'cheap', 'light'];
+  const out = [];
+  for (const mode of modes) {
+    try {
+      const p = build({ headcount, budget, prefs, catalog, table, mode, banned });
+      if (!p.items.length) continue;
+      // 硬约束 1：不能明显超预算
+      if (p.total > budget * 1.03) continue;
+      // 硬约束 2：轻卡方案人均热量必须真的低，且热量数据要可信
+      if (mode === 'light') {
+        if (!p.lightOk) continue;
+        const kpp = p.totalKcal ? p.totalKcal / headcount : null;
+        if (kpp != null && kpp > 800) continue;
+        if (!p.items.some((i) => i.kcal != null)) continue;
+      }
+      out.push(p);
+    } catch (e) {
+      console.error('[planner] mode', mode, '失败:', e.message);
+    }
+  }
+  // 全被淘汰时，至少给一套最便宜的，别让用户空手
+  if (!out.length) {
+    for (const mode of ['cheap', 'balanced']) {
+      try {
+        const p = build({ headcount, budget, prefs, catalog, table, mode, banned });
+        if (p.items.length) { out.push(p); break; }
+      } catch { /* ignore */ }
+    }
+  }
+  return out;
+}
+
+global.Plan = { planAll, build, PREF_LABEL, matchNutrition };
+})(window);
+
+</script>
+<script>window.__SNAPSHOT__={"generatedAt":"2026-10-25T05:39:52.283Z","source":"麦当劳 MCP (https://mcp.mcd.cn)","tools":["query-nearby-stores","query-meals","list-nutrition-foods","query-meal-detail","calculate-price","query-coupons","query-campaigns"],"city":"广州","store":{"storeCode":"1400359","storeName":"麦当劳广州天源路餐厅","address":""},"stores":[{"storeCode":"1400877","storeName":"麦当劳广州南站三楼A23检票口上方餐厅","address":"石壁街南站南路133号332（自编号广州南3F19）"},{"storeCode":"1400752001","storeName":"广州南站地铁D出口快捷小站","address":"石壁街南站南路133号127（自编号广州南1F27)"},{"storeCode":"1400685","storeName":"麦当劳广州南站三楼A9检票口上方餐厅","address":"广州南站出发大厅3F29铺"},{"storeCode":"1400283","storeName":"麦当劳广州南站三楼B11检票口上方餐厅","address":"南站三楼B区(B10-B11检票口上方，非换乘区)"},{"storeCode":"1400752","storeName":"麦当劳广州南站三楼B26检票口上方餐厅","address":"麦当劳广州南站三楼B26检票口上方餐厅"}],"catalog":{"main":[{"code":"9900015568","name":"精选超值随心配","price":13.9,"originalPrice":13.9,"image":"https://menu-img.mcd.cn/pcm/prod/menu/ProductPool/product/MS_9900015568_320.png","cat":"随心配1+1","tags":["超值百种组合随心配"],"kcal":502,"kcalSource":"combo-kJ2kcal","kcalParts":["那么大鸡排（椒盐风味） 1612","阳光柠檬红茶中杯 488"]},{"code":"9900013304","name":"人气经典随心配","price":14.9,"originalPrice":14.9,"image":"https://menu-img.mcd.cn/pcm/prod/menu/ProductPool/product/MS_9900013304_320.png","cat":"随心配1+1","tags":["超值百种组合随心配"],"kcal":429,"kcalSource":"combo-kJ2kcal","kcalParts":["双层吉士汉堡 1796"]},{"code":"521952","name":"龙焰鸡腿堡","price":15.9,"originalPrice":24,"image":"https://menu-img.mcd.cn/pcm/prod/menu/ProductPool/product/MS_521952_320.png","cat":"人气热卖","tags":["韩式辣椒黄油风味"],"kcal":null},{"code":"521731","name":"枫糖风味厚松饼猪柳堡","price":18,"originalPrice":18,"image":"https://menu-img.mcd.cn/pcm/prod/menu/20261008/product/MS_521731_320.png","cat":"巨无霸牛鱼肉堡","tags":["单品","全球爆款","全天供应"],"kcal":null},{"code":"9900011126","name":"酥脆无双套餐","price":20,"originalPrice":20,"image":"https://menu-img.mcd.cn/pcm/prod/menu/20260701/product/MS_9900011126_320.png","cat":"500大卡套餐","tags":[],"kcal":434,"kcalSource":"combo-kJ2kcal","kcalParts":["麦麦脆汁鸡-琵琶腿 1372","迷你薯条 444","无糖可口可乐中杯 0"]},{"code":"521730","name":"枫糖风味厚松饼猪柳蛋堡","price":22,"originalPrice":22,"image":"https://menu-img.mcd.cn/pcm/prod/menu/20261008/product/MS_521730_320.png","cat":"巨无霸牛鱼肉堡","tags":["单品","全球爆款","全天供应"],"kcal":null},{"code":"1440","name":"麦辣鸡腿汉堡","price":22.5,"originalPrice":22.5,"image":"https://menu-img.mcd.cn/pcm/prod/menu/20260325/product/MS_1440_320.png","cat":"鸡肉汉堡/卷","tags":["单品","人气经典","外酥里嫩"],"kcal":485,"kcalSource":"table-kJ2kcal"},{"code":"521316","name":"高达吉士双牛堡","price":22.5,"originalPrice":22.5,"image":"https://menu-img.mcd.cn/pcm/prod/menu/20260309/product/MS_521316_320.png","cat":"巨无霸牛鱼肉堡","tags":["单品","100%纯牛肉","人气"],"kcal":null},{"code":"9900015602","name":"大堡口福三件套","price":22.9,"originalPrice":47,"image":"https://menu-img.mcd.cn/pcm/prod/menu/ProductPool/product/MS_9900015602_320.png","cat":"大堡口福单人餐","tags":["大口吃肉好快乐"],"kcal":436,"kcalSource":"combo-kJ2kcal","kcalParts":["中薯条 1210","可乐中杯 616"]},{"code":"1120","name":"双层吉士汉堡","price":23,"originalPrice":23,"image":"https://menu-img.mcd.cn/pcm/prod/menu/20260309/product/MS_1120_320.png","cat":"巨无霸牛鱼肉堡","tags":["单品","100%纯牛肉"],"kcal":429,"kcalSource":"table-kJ2kcal"},{"code":"1406","name":"板烧鸡腿堡","price":23.5,"originalPrice":23.5,"image":"https://menu-img.mcd.cn/pcm/prod/menu/20241008/product/MS_1406_320.png","cat":"鸡肉汉堡/卷","tags":["单品","板烧滋滋","多汁惹味"],"kcal":391,"kcalSource":"table-kJ2kcal"},{"code":"9900014974","name":"枫糖风味厚松饼猪柳堡三件套","price":23.9,"originalPrice":36,"image":"https://menu-img.mcd.cn/pcm/prod/menu/20261008/product/MS_9900014974_320.png","cat":"精选单人餐","tags":["经典精选","全球爆款","全天供应"],"kcal":436,"kcalSource":"combo-kJ2kcal","kcalParts":["中薯条 1210","可乐中杯 616"]},{"code":"9900003586","name":"双层深海鳕鱼堡","price":24,"originalPrice":24,"image":"https://menu-img.mcd.cn/pcm/prod/menu/ProductPool/product/MS_9900003586_320.png","cat":"巨无霸牛鱼肉堡","tags":["单品","麦香鱼系列"],"kcal":485,"kcalSource":"table-kJ2kcal"},{"code":"9900011123","name":"“辣”么快乐套餐","price":24,"originalPrice":36.5,"image":"https://menu-img.mcd.cn/pcm/prod/menu/ProductPool/product/MS_9900011123_320.png","cat":"500大卡套餐","tags":[],"kcal":170,"kcalSource":"combo-kJ2kcal","kcalParts":["麦乐鸡4块 712","无糖可口可乐中杯 0"]},{"code":"1106","name":"培根蔬萃双层牛堡","price":24.5,"originalPrice":24.5,"image":"https://menu-img.mcd.cn/pcm/prod/menu/20260309/product/MS_1106_320.png","cat":"巨无霸牛鱼肉堡","tags":["单品","100%纯牛肉"],"kcal":442,"kcalSource":"table-kJ2kcal"},{"code":"521900","name":"咸蛋黄鸡腿蛋月堡","price":25,"originalPrice":25,"image":"https://menu-img.mcd.cn/pcm/prod/menu/ProductPool/product/MS_521900_320.png","cat":"鸡肉汉堡/卷","tags":["上新","酥脆鸡腿排","滑嫩蒸蛋"],"kcal":null},{"code":"9900005449","name":"吉士汉堡包套餐","price":26,"originalPrice":38.5,"image":"https://menu-img.mcd.cn/pcm/prod/menu/20260824/product/MS_G504971_320.png","cat":"巨无霸牛鱼肉堡","tags":["套餐","100%纯牛肉"],"kcal":294,"kcalSource":"table-kJ2kcal"},{"code":"4648","name":"不素之霸双层牛堡","price":26.5,"originalPrice":26.5,"image":"https://menu-img.mcd.cn/pcm/prod/menu/20260309/product/MS_4648_320.png","cat":"巨无霸牛鱼肉堡","tags":["单品","100%纯牛肉"],"kcal":493,"kcalSource":"table-kJ2kcal"},{"code":"9900016073","name":"龙焰鸡腿堡三件套","price":26.9,"originalPrice":47.5,"image":"https://menu-img.mcd.cn/pcm/prod/menu/ProductPool/product/MS_9900016073_320.png","cat":"人气热卖","tags":["韩式辣椒黄油风味"],"kcal":436,"kcalSource":"combo-kJ2kcal","kcalParts":["中薯条 1210","可乐中杯 616"]},{"code":"9900015850","name":"咸蛋黄鸡腿蛋月堡三件套","price":26.9,"originalPrice":48.5,"image":"https://menu-img.mcd.cn/pcm/prod/menu/ProductPool/product/MS_9900015850_320.png","cat":"鸡肉汉堡/卷","tags":["上新","酥脆鸡腿排","滑嫩蒸蛋"],"kcal":436,"kcalSource":"combo-kJ2kcal","kcalParts":["中薯条 1210","可乐中杯 616"]},{"code":"521953","name":"龙焰芝士棒鸡腿堡","price":27,"originalPrice":27,"image":"https://menu-img.mcd.cn/pcm/prod/menu/ProductPool/product/MS_521953_320.png","cat":"鸡肉汉堡/卷","tags":["上新","浓郁奶香拉丝芝士"],"kcal":null},{"code":"9900014838","name":"枫糖风味厚松饼猪柳蛋堡三件套","price":27.9,"originalPrice":40,"image":"https://menu-img.mcd.cn/pcm/prod/menu/20261008/product/MS_9900014838_320.png","cat":"人气热卖","tags":["全球爆款","全天供应"],"kcal":436,"kcalSource":"combo-kJ2kcal","kcalParts":["中薯条 1210","可乐中杯 616"]},{"code":"9900014837","name":"枫糖风味厚松饼猪柳蛋堡三件套","price":27.9,"originalPrice":40,"image":"https://menu-img.mcd.cn/pcm/prod/menu/20261008/product/MS_9900014837_320.png","cat":"精选单人餐","tags":["经典精选","全球爆款","全天供应"],"kcal":436,"kcalSource":"combo-kJ2kcal","kcalParts":["中薯条 1210","可乐中杯 616"]},{"code":"9900004236","name":"人气超值四件套随心选","price":28,"originalPrice":57,"image":"https://menu-img.mcd.cn/pcm/prod/menu/20260824/product/MS_9900004236_320.gif","cat":"精选单人餐","tags":["麦金卡"],"kcal":null,"kcalSource":"combo-implausible","kcalParts":["麦辣鸡腿汉堡 2029","中薯条 1210","麦乐鸡4块 712","可乐中杯 616"]},{"code":"9900000891","name":"麦辣鸡腿堡四件套","price":28,"originalPrice":57,"image":"https://menu-img.mcd.cn/pcm/prod/menu/20260824/product/MS_9900000891_320.png","cat":"鸡肉汉堡/卷","tags":["麦金卡"],"kcal":null,"kcalSource":"combo-implausible","kcalParts":["麦辣鸡腿汉堡 2029","中薯条 1210","麦乐鸡4块 712","可乐中杯 616"]},{"code":"9900000890","name":"板烧鸡腿堡四件套","price":28,"originalPrice":57,"image":"https://menu-img.mcd.cn/pcm/prod/menu/20260824/product/MS_9900000890_320.png","cat":"鸡肉汉堡/卷","tags":["麦金卡"],"kcal":391,"kcalSource":"table-kJ2kcal"},{"code":"9900005453","name":"麦香鸡套餐","price":28,"originalPrice":40.5,"image":"https://menu-img.mcd.cn/pcm/prod/menu/20260824/product/MS_G504967_320.png","cat":"鸡肉汉堡/卷","tags":["套餐","立省10.5元起"],"kcal":370,"kcalSource":"table-kJ2kcal"},{"code":"9900016301","name":"枫糖风味厚松饼猪柳蛋堡四件套","price":28,"originalPrice":52,"image":"https://menu-img.mcd.cn/pcm/prod/menu/ProductPool/product/MS_9900016301_320.png","cat":"巨无霸牛鱼肉堡","tags":["麦金卡"],"kcal":607,"kcalSource":"combo-kJ2kcal","kcalParts":["中薯条 1210","麦乐鸡4块 712","可乐中杯 616"]},{"code":"9900011128","name":"“堡”你欢乐套餐","price":28,"originalPrice":42.5,"image":"https://menu-img.mcd.cn/pcm/prod/menu/ProductPool/product/MS_9900011128_320.png","cat":"500大卡套餐","tags":["粉丝之选"],"kcal":450,"kcalSource":"combo-kJ2kcal","kcalParts":["汉堡包 1039","麦乐鸡4块 712","苹果片一袋(60g) 133","无糖可口可乐中杯 0"]},{"code":"9900016309","name":"龙焰鸡腿堡四件套","price":29,"originalPrice":57,"image":"https://menu-img.mcd.cn/pcm/prod/menu/ProductPool/product/MS_9900016309_320.png","cat":"鸡肉汉堡/卷","tags":["麦金卡"],"kcal":607,"kcalSource":"combo-kJ2kcal","kcalParts":["中薯条 1210","麦乐鸡4块 712","可乐中杯 616"]},{"code":"9900016075","name":"龙焰芝士棒鸡腿堡三件套","price":29.9,"originalPrice":50.5,"image":"https://menu-img.mcd.cn/pcm/prod/menu/ProductPool/product/MS_9900016075_320.png","cat":"人气热卖","tags":["浓郁奶香拉丝芝士"],"kcal":436,"kcalSource":"combo-kJ2kcal","kcalParts":["中薯条 1210","可乐中杯 616"]},{"code":"511782","name":"芝士安格斯厚牛堡","price":31.5,"originalPrice":31.5,"image":"https://menu-img.mcd.cn/pcm/prod/menu/20260309/product/MS_511782_320.png","cat":"安格斯MAX厚牛堡","tags":["单品","100%安格斯牛肉"],"kcal":696,"kcalSource":"table-kJ2kcal"},{"code":"9900010110","name":"鱼牛汉堡四件套随心选","price":32,"originalPrice":58.5,"image":"https://menu-img.mcd.cn/pcm/prod/menu/20260824/product/MS_9900010110_320.gif","cat":"精选单人餐","tags":["麦金卡"],"kcal":null,"kcalSource":"combo-implausible","kcalParts":["培根蔬萃双层牛堡 1850","中薯条 1210","麦乐鸡4块 712","可乐中杯 616"]},{"code":"9900016310","name":"龙焰芝士棒鸡腿堡四件套","price":32,"originalPrice":57,"image":"https://menu-img.mcd.cn/pcm/prod/menu/ProductPool/product/MS_9900016310_320.png","cat":"鸡肉汉堡/卷","tags":["麦金卡"],"kcal":607,"kcalSource":"combo-kJ2kcal","kcalParts":["中薯条 1210","麦乐鸡4块 712","可乐中杯 616"]},{"code":"9900000888","name":"巨无霸四件套","price":32,"originalPrice":58.5,"image":"https://menu-img.mcd.cn/pcm/prod/menu/20260824/product/MS_9900000888_320.png","cat":"巨无霸牛鱼肉堡","tags":["麦金卡"],"kcal":513,"kcalSource":"table-kJ2kcal"},{"code":"9900000886","name":"不素之霸双层牛堡四件套","price":32,"originalPrice":58.5,"image":"https://menu-img.mcd.cn/pcm/prod/menu/20260824/product/MS_9900000886_320.png","cat":"巨无霸牛鱼肉堡","tags":["麦金卡"],"kcal":493,"kcalSource":"table-kJ2kcal"},{"code":"9900000885","name":"培根蔬萃双层牛堡四件套","price":32,"originalPrice":58.5,"image":"https://menu-img.mcd.cn/pcm/prod/menu/20260824/product/MS_9900000885_320.png","cat":"巨无霸牛鱼肉堡","tags":["麦金卡"],"kcal":442,"kcalSource":"table-kJ2kcal"},{"code":"9900000893","name":"双层深海鳕鱼堡四件套","price":32,"originalPrice":58.5,"image":"https://menu-img.mcd.cn/pcm/prod/menu/20260824/product/MS_9900000893_320.png","cat":"巨无霸牛鱼肉堡","tags":["麦金卡"],"kcal":485,"kcalSource":"table-kJ2kcal"},{"code":"9900005456","name":"麦辣鸡腿汉堡三件套","price":33.5,"originalPrice":46,"image":"https://menu-img.mcd.cn/pcm/prod/menu/20260824/product/MS_9900005456_320.png","cat":"鸡肉汉堡/卷","tags":["套餐","立省10.5元起"],"kcal":485,"kcalSource":"table-kJ2kcal"},{"code":"9900005460","name":"麦香鱼套餐","price":33.5,"originalPrice":46,"image":"https://menu-img.mcd.cn/pcm/prod/menu/20260824/product/MS_G504968_320.png","cat":"巨无霸牛鱼肉堡","tags":["套餐","麦香鱼系列"],"kcal":325,"kcalSource":"table-kJ2kcal"},{"code":"9900005464","name":"双层吉士汉堡套餐","price":34,"originalPrice":46.5,"image":"https://menu-img.mcd.cn/pcm/prod/menu/20260824/product/MS_G504966_320.png","cat":"巨无霸牛鱼肉堡","tags":["套餐","100%纯牛肉"],"kcal":429,"kcalSource":"table-kJ2kcal"},{"code":"9900004064","name":"精选单人餐三件套","price":34.5,"originalPrice":46,"image":"https://menu-img.mcd.cn/pcm/prod/menu/20260824/product/MS_9900004064_320.gif","cat":"人气热卖","tags":["爆款"],"kcal":null,"kcalSource":"combo-implausible","kcalParts":["板烧鸡腿堡 1638","中薯条 1210","可乐中杯 616"]},{"code":"9900005462","name":"板烧鸡腿堡三件套","price":34.5,"originalPrice":47,"image":"https://menu-img.mcd.cn/pcm/prod/menu/20260824/product/MS_9900005462_320.png","cat":"鸡肉汉堡/卷","tags":["套餐","新升级","更多汁"],"kcal":391,"kcalSource":"table-kJ2kcal"},{"code":"511781","name":"培根安格斯厚牛堡","price":34.5,"originalPrice":34.5,"image":"https://menu-img.mcd.cn/pcm/prod/menu/20260309/product/MS_511781_320.png","cat":"安格斯MAX厚牛堡","tags":["单品","100%安格斯牛肉"],"kcal":707,"kcalSource":"table-kJ2kcal"},{"code":"9900005413","name":"双层深海鳕鱼堡三件套","price":35,"originalPrice":47.5,"image":"https://menu-img.mcd.cn/pcm/prod/menu/20260824/product/MS_9900005413_320.png","cat":"巨无霸牛鱼肉堡","tags":["套餐","麦香鱼系列"],"kcal":485,"kcalSource":"table-kJ2kcal"},{"code":"9900009245","name":"牛气满满套餐","price":35,"originalPrice":47.5,"image":"https://menu-img.mcd.cn/pcm/prod/menu/ProductPool/product/MS_9900009245_320.png","cat":"500大卡套餐","tags":[],"kcal":495,"kcalSource":"table-kJ2kcal"},{"code":"9900005468","name":"培根蔬萃双层牛堡三件套","price":35.5,"originalPrice":48,"image":"https://menu-img.mcd.cn/pcm/prod/menu/20260824/product/MS_9900005468_320.png","cat":"巨无霸牛鱼肉堡","tags":["套餐","100%纯牛肉"],"kcal":442,"kcalSource":"table-kJ2kcal"},{"code":"9900011121","name":"“苹”水相“鱼”套餐","price":36,"originalPrice":54,"image":"https://menu-img.mcd.cn/pcm/prod/menu/ProductPool/product/MS_9900011121_320.png","cat":"500大卡套餐","tags":["粉丝之选"],"kcal":412,"kcalSource":"combo-kJ2kcal","kcalParts":["麦香鱼 1359","小杯玉米杯 223","苹果片一袋(60g) 133","锡兰红茶 8"]},{"code":"9900005466","name":"巨无霸三件套","price":36.5,"originalPrice":49,"image":"https://menu-img.mcd.cn/pcm/prod/menu/20260824/product/MS_9900005466_320.png","cat":"巨无霸牛鱼肉堡","tags":["套餐","100%纯牛肉"],"kcal":513,"kcalSource":"table-kJ2kcal"},{"code":"9900006957","name":"安格斯厚牛堡四件套随心选","price":37,"originalPrice":66,"image":"https://menu-img.mcd.cn/pcm/prod/menu/20260824/product/MS_9900006957_320.png","cat":"精选单人餐","tags":["麦金卡"],"kcal":null,"kcalSource":"combo-implausible","kcalParts":["芝士安格斯厚牛堡 2914","中薯条 1210","麦乐鸡4块 712","可乐中杯 616"]},{"code":"9900000881","name":"培根安格斯厚牛堡四件套","price":37,"originalPrice":66,"image":"https://menu-img.mcd.cn/pcm/prod/menu/20260824/product/MS_9900000881_320.png","cat":"安格斯MAX厚牛堡","tags":["麦金卡"],"kcal":707,"kcalSource":"table-kJ2kcal"},{"code":"9900000882","name":"芝士安格斯厚牛堡四件套","price":37,"originalPrice":66,"image":"https://menu-img.mcd.cn/pcm/prod/menu/20260824/product/MS_9900000882_320.png","cat":"安格斯MAX厚牛堡","tags":["麦金卡"],"kcal":696,"kcalSource":"table-kJ2kcal"},{"code":"9900005411","name":"不素之霸双层牛堡三件套","price":37.5,"originalPrice":50,"image":"https://menu-img.mcd.cn/pcm/prod/menu/20260824/product/MS_9900005411_320.png","cat":"巨无霸牛鱼肉堡","tags":["套餐","100%纯牛肉"],"kcal":493,"kcalSource":"table-kJ2kcal"},{"code":"9900009242","name":"“苹板”支撑Pro套餐","price":39.5,"originalPrice":53.5,"image":"https://menu-img.mcd.cn/pcm/prod/menu/ProductPool/product/MS_9900009242_320.png","cat":"500大卡套餐","tags":[],"kcal":476,"kcalSource":"table-kJ2kcal"},{"code":"9900005430","name":"芝士安格斯厚牛堡三件套","price":42.5,"originalPrice":55,"image":"https://menu-img.mcd.cn/pcm/prod/menu/20260824/product/MS_9900005430_320.png","cat":"安格斯MAX厚牛堡","tags":["套餐","100%安格斯牛肉"],"kcal":696,"kcalSource":"table-kJ2kcal"},{"code":"9900005428","name":"培根安格斯厚牛堡三件套","price":45.5,"originalPrice":58,"image":"https://menu-img.mcd.cn/pcm/prod/menu/20260824/product/MS_9900005428_320.png","cat":"安格斯MAX厚牛堡","tags":["套餐","100%安格斯牛肉"],"kcal":707,"kcalSource":"table-kJ2kcal"}],"side":[{"code":"6102","name":"苹果片","price":7,"originalPrice":7,"image":"https://menu-img.mcd.cn/pcm/prod/menu/ProductPool/product/MS_6102_320.png","cat":"小食甜品/其他","tags":["小食"],"kcal":32,"kcalSource":"table-kJ2kcal"},{"code":"521741","name":"脆薯饼","price":8.5,"originalPrice":8.5,"image":"https://menu-img.mcd.cn/pcm/prod/menu/ProductPool/product/MS_521741_320.png","cat":"小食甜品/其他","tags":["小食"],"kcal":146,"kcalSource":"table-kJ2kcal"},{"code":"521986","name":"马苏里拉拉丝芝士条","price":11,"originalPrice":15,"image":"https://menu-img.mcd.cn/pcm/prod/menu/ProductPool/product/MS_G521986_320.png","cat":"小食甜品/其他","tags":["上新","趁热拉丝","奶香醇厚"],"kcal":null},{"code":"9900016077","name":"蘸酱炸鸡","price":11.9,"originalPrice":17.5,"image":"https://menu-img.mcd.cn/pcm/prod/menu/ProductPool/product/MS_9900016077_320.gif","cat":"人气热卖","tags":["韩式芝士风味酱上新"],"kcal":328,"kcalSource":"combo-kJ2kcal","kcalParts":["麦麦脆汁鸡-琵琶腿 1372"]},{"code":"9900016078","name":"蘸酱麦麦脆汁鸡","price":11.9,"originalPrice":18,"image":"https://menu-img.mcd.cn/pcm/prod/menu/ProductPool/product/MS_9900016078_320.png","cat":"蘸酱炸鸡","tags":["蘸酱炸鸡","韩式芝士风味酱上新"],"kcal":328,"kcalSource":"combo-kJ2kcal","kcalParts":["麦麦脆汁鸡-琵琶腿 1372"]},{"code":"9900016099","name":"蘸酱脆皮鸡块","price":11.9,"originalPrice":18,"image":"https://menu-img.mcd.cn/pcm/prod/menu/ProductPool/product/MS_9900016099_320.png","cat":"蘸酱炸鸡","tags":["蘸酱炸鸡","韩式芝士风味酱上新"],"kcal":null},{"code":"4437","name":"玉米杯","price":13,"originalPrice":13,"image":"https://menu-img.mcd.cn/pcm/prod/menu/ProductPool/product/MS_G4437_320.png","cat":"小食甜品/其他","tags":["小食"],"kcal":87,"kcalSource":"table-kJ2kcal"},{"code":"4810","name":"薯条","price":13.5,"originalPrice":13.5,"image":"https://menu-img.mcd.cn/pcm/prod/menu/20250523/product/MS_G4810_320_1747877491921.png","cat":"小食甜品/其他","tags":["小食"],"kcal":106,"kcalSource":"table-kJ2kcal"},{"code":"1401","name":"麦乐鸡","price":14,"originalPrice":14,"image":"https://menu-img.mcd.cn/pcm/prod/menu/20260529/product/MS_G1401_320.png","cat":"炸鸡","tags":["单品","人气"],"kcal":213,"kcalSource":"table-kJ2kcal"},{"code":"521156","name":"那么大鸡排（椒盐风味）","price":14,"originalPrice":14,"image":"https://menu-img.mcd.cn/pcm/prod/menu/20260101/product/MS_521156_320.png","cat":"炸鸡","tags":["单品"],"kcal":385,"kcalSource":"table-kJ2kcal"},{"code":"1700","name":"麦辣鸡翅","price":15,"originalPrice":15,"image":"https://menu-img.mcd.cn/pcm/prod/menu/20260325/product/MS_G1700_320.png","cat":"炸鸡","tags":["单品","黄金酥脆","鲜嫩多汁"],"kcal":224,"kcalSource":"table-kJ2kcal"},{"code":"9900005432","name":"麦麦脆汁鸡1块","price":15,"originalPrice":15,"image":"https://menu-img.mcd.cn/pcm/prod/menu/ProductPool/product/MS_9900005432_320.png","cat":"炸鸡","tags":["单品"],"kcal":328,"kcalSource":"combo-kJ2kcal","kcalParts":["麦麦脆汁鸡-琵琶腿 1372"]},{"code":"521901","name":"月下相思扭扭薯","price":15,"originalPrice":15,"image":"https://menu-img.mcd.cn/pcm/prod/menu/ProductPool/product/MS_521901_320.png","cat":"小食甜品/其他","tags":["上新","口口酥脆","薯香十足"],"kcal":null},{"code":"9900016308","name":"蘸酱脆皮鸡块8块","price":19.9,"originalPrice":30,"image":"https://menu-img.mcd.cn/pcm/prod/menu/ProductPool/product/MS_9900016308_320.png","cat":"小食拼盘/多人餐","tags":["上新","蘸酱炸鸡新吃法"],"kcal":null},{"code":"9900004835","name":"麦乐鸡套餐","price":25,"originalPrice":37.5,"image":"https://menu-img.mcd.cn/pcm/prod/menu/20260824/product/MS_G504969_320.png","cat":"炸鸡","tags":["套餐","立省10.5元起"],"kcal":213,"kcalSource":"table-kJ2kcal"},{"code":"9900005451","name":"麦辣鸡翅4块套餐","price":36.5,"originalPrice":49,"image":"https://menu-img.mcd.cn/pcm/prod/menu/20260824/product/MS_G504972_320.png","cat":"炸鸡","tags":["套餐","立省10.5元起"],"kcal":436,"kcalSource":"combo-kJ2kcal","kcalParts":["中薯条 1210","可乐中杯 616"]}],"drink":[{"code":"3757","name":"纯悦","price":7.5,"originalPrice":7.5,"image":"https://menu-img.mcd.cn/pcm/prod/menu/20240904/product/MS_3757_320.png","cat":"饮品","tags":["冷饮"],"kcal":0,"kcalSource":"table-kJ2kcal"},{"code":"520689","name":"鲜萃咖啡","price":9.5,"originalPrice":9.5,"image":"https://menu-img.mcd.cn/pcm/prod/menu/20250324/product/MS_G520688_320.gif","cat":"麦咖啡™","tags":["麦咖啡™咖啡","鲜萃咖啡"],"kcal":13,"kcalSource":"table-kJ2kcal"},{"code":"9900008751","name":"可乐","price":9.5,"originalPrice":9.5,"image":"https://menu-img.mcd.cn/pcm/prod/menu/ProductPool/product/MS_9900008751_320.gif","cat":"饮品","tags":["冷饮"],"kcal":0,"kcalSource":"table-kJ2kcal"},{"code":"515280","name":"阳光柠檬红茶","price":9.5,"originalPrice":9.5,"image":"https://menu-img.mcd.cn/pcm/prod/menu/ProductPool/product/MS_G515280_320.png","cat":"饮品","tags":["冷饮"],"kcal":117,"kcalSource":"table-kJ2kcal"},{"code":"9900015561","name":"麦咖啡冰爽一夏","price":9.9,"originalPrice":23,"image":"https://menu-img.mcd.cn/pcm/prod/menu/ProductPool/product/MS_9900015561_320.gif","cat":"麦咖啡™","tags":["限定特惠","人气雪冰喝一夏"],"kcal":null},{"code":"510479","name":"燕麦奶铁","price":9.9,"originalPrice":23,"image":"https://menu-img.mcd.cn/pcm/prod/menu/20260422/product/MS_G510481_320.png","cat":"麦咖啡™","tags":["麦咖啡™咖啡"],"kcal":132,"kcalSource":"table-kJ2kcal"},{"code":"3755","name":"纯牛奶(盒装)","price":10.5,"originalPrice":10.5,"image":"https://menu-img.mcd.cn/pcm/prod/menu/20240731/product/MS_3755_320.png","cat":"饮品","tags":["冷饮"],"kcal":null},{"code":"6362","name":"100% 苹果汁(盒装)","price":11.5,"originalPrice":11.5,"image":"https://menu-img.mcd.cn/pcm/prod/menu/20250430/product/MS_6362_320_1745552987716.png","cat":"饮品","tags":["冷饮"],"kcal":null},{"code":"3505","name":"锡兰红茶","price":11.5,"originalPrice":11.5,"image":"https://menu-img.mcd.cn/pcm/prod/menu/ProductPool/product/MS_3505_320.png","cat":"饮品","tags":["热饮"],"kcal":2,"kcalSource":"table-kJ2kcal"},{"code":"507411","name":"麦咖啡™美式","price":11.9,"originalPrice":19,"image":"https://menu-img.mcd.cn/pcm/prod/menu/20260422/product/MS_G507374_320.gif","cat":"麦咖啡™","tags":["限定特惠"],"kcal":null},{"code":"521817","name":"【美汁源】“多汁柠柠”","price":12,"originalPrice":12,"image":"https://menu-img.mcd.cn/pcm/prod/menu/20260807/product/MS_521817_320.png","cat":"饮品","tags":["上新","清爽上新"],"kcal":null},{"code":"2430","name":"【美汁源】“黄金橙橙”","price":13,"originalPrice":13,"image":"https://menu-img.mcd.cn/pcm/prod/menu/20240904/product/MS_2430_320.png","cat":"饮品","tags":["冷饮"],"kcal":165,"kcalSource":"table-kJ2kcal"},{"code":"6352","name":"阳光橙麦炫酷","price":13,"originalPrice":13,"image":"https://menu-img.mcd.cn/pcm/prod/menu/ProductPool/product/MS_6352_320.png","cat":"饮品","tags":["冷饮"],"kcal":null},{"code":"515946","name":"浓浓黑巧（冰/热）","price":13.9,"originalPrice":21,"image":"https://menu-img.mcd.cn/pcm/prod/menu/20261008/product/MS_G515945_320.gif","cat":"麦咖啡™","tags":["限定特惠"],"kcal":null},{"code":"507409","name":"麦咖啡™奶铁","price":13.9,"originalPrice":21,"image":"https://menu-img.mcd.cn/pcm/prod/menu/20260422/product/MS_G507372_320.gif","cat":"麦咖啡™","tags":["限定特惠","更奶更浓"],"kcal":null},{"code":"507389","name":"浓缩咖啡","price":15,"originalPrice":15,"image":"https://menu-img.mcd.cn/pcm/prod/menu/20250324/product/MS_507389_320.png","cat":"麦咖啡™","tags":["麦咖啡™咖啡"],"kcal":13,"kcalSource":"table-kJ2kcal"},{"code":"515955","name":"浓浓燕麦黑巧（冰/热）","price":15.9,"originalPrice":23,"image":"https://menu-img.mcd.cn/pcm/prod/menu/20261008/product/MS_G515954_320.gif","cat":"麦咖啡™","tags":["限定特惠"],"kcal":null},{"code":"507394","name":"牛奶","price":19,"originalPrice":19,"image":"https://menu-img.mcd.cn/pcm/prod/menu/ProductPool/product/MS_G5073941_320.png","cat":"麦咖啡™","tags":["其他"],"kcal":196,"kcalSource":"table-kJ2kcal"},{"code":"507387","name":"卡布奇诺","price":21,"originalPrice":21,"image":"https://menu-img.mcd.cn/pcm/prod/menu/20250324/product/MS_G507388_320.png","cat":"麦咖啡™","tags":["麦咖啡™咖啡"],"kcal":167,"kcalSource":"table-kJ2kcal"},{"code":"510489","name":"燕麦奶","price":21,"originalPrice":21,"image":"https://menu-img.mcd.cn/pcm/prod/menu/ProductPool/product/MS_G510489_320.png","cat":"麦咖啡™","tags":["其他"],"kcal":132,"kcalSource":"table-kJ2kcal"}],"dessert":[{"code":"521951","name":"灰焰圆筒","price":5,"originalPrice":5,"image":"https://menu-img.mcd.cn/pcm/prod/menu/ProductPool/product/MS_G521951_320.gif","cat":"小食甜品/其他","tags":["上新","灰焰"],"kcal":null},{"code":"515837","name":"圆筒冰淇淋","price":5,"originalPrice":5,"image":"https://menu-img.mcd.cn/pcm/prod/menu/ProductPool/product/MS_G515837_320.png","cat":"小食甜品/其他","tags":["冰淇淋","第二份半价"],"kcal":93,"kcalSource":"table-kJ2kcal"},{"code":"9900008752","name":"派","price":8.5,"originalPrice":8.5,"image":"https://menu-img.mcd.cn/pcm/prod/menu/ProductPool/product/MS_G9900008752_320.gif","cat":"小食甜品/其他","tags":["派","第二份优惠"],"kcal":232,"kcalSource":"table-kJ2kcal"},{"code":"521871","name":"美禄可可雪冰","price":9.9,"originalPrice":23,"image":"https://menu-img.mcd.cn/pcm/prod/menu/ProductPool/product/MS_521871_320.gif","cat":"麦咖啡™","tags":["限定特惠"],"kcal":null},{"code":"9900008745","name":"新地","price":12,"originalPrice":12,"image":"https://menu-img.mcd.cn/pcm/prod/menu/ProductPool/product/MS_G9900008745_320.gif","cat":"小食甜品/其他","tags":["冰淇淋","第二份半价"],"kcal":140,"kcalSource":"table-kJ2kcal"},{"code":"514851","name":"咖啡阿芙佳朵","price":15,"originalPrice":15,"image":"https://menu-img.mcd.cn/pcm/prod/menu/20250324/product/MS_514851_320.png","cat":"麦咖啡™","tags":["麦咖啡™咖啡"],"kcal":139,"kcalSource":"table-kJ2kcal"},{"code":"9900008754","name":"经典麦旋风","price":15.5,"originalPrice":15.5,"image":"https://menu-img.mcd.cn/pcm/prod/menu/ProductPool/product/MS_G9900008754_320.gif","cat":"小食甜品/其他","tags":["冰淇淋","第二份半价"],"kcal":266,"kcalSource":"combo-kJ2kcal","kcalParts":["奥利奥麦旋风 1115"]},{"code":"521950","name":"蓝莓爆爆珠麦旋风","price":16.5,"originalPrice":16.5,"image":"https://menu-img.mcd.cn/pcm/prod/menu/ProductPool/product/MS_G521950_320.gif","cat":"人气热卖","tags":["蓝莓"],"kcal":null},{"code":"521917","name":"泷愿成真麦旋风——大米风味","price":16.5,"originalPrice":16.5,"image":"https://menu-img.mcd.cn/pcm/prod/menu/ProductPool/product/MS_G521917_320.gif","cat":"小食甜品/其他","tags":["上新","快乐旋开吃"],"kcal":null},{"code":"521750","name":"泷盐星星麦旋风","price":16.5,"originalPrice":16.5,"image":"https://menu-img.mcd.cn/pcm/prod/menu/ProductPool/product/MS_G521750_320.gif","cat":"小食甜品/其他","tags":["冰淇淋","素龙饼干"],"kcal":null}],"share":[{"code":"9900011056","name":"全明星双人分享餐八件套","price":49.9,"originalPrice":114.5,"image":"https://menu-img.mcd.cn/pcm/prod/menu/20261008/product/MS_9900011056_320.gif","cat":"人气热卖","tags":[],"kcal":null,"kcalSource":"combo-implausible","kcalParts":["麦辣鸡腿汉堡 2029","板烧鸡腿堡 1638","麦乐鸡4块 712","中薯条 1210","可乐中杯 616"]},{"code":"9900015151","name":"麦麦周末双人餐","price":49.9,"originalPrice":85.5,"image":"https://menu-img.mcd.cn/pcm/prod/menu/ProductPool/product/MS_9900015151_320.gif","cat":"人气热卖","tags":["全球爆款","全天供应"],"kcal":null,"kcalSource":"combo-implausible","kcalParts":["麦辣鸡腿汉堡 2029","中薯条 1210","可乐中杯 616"]},{"code":"9900005321","name":"BFF四宫格小食盘双人餐","price":62.9,"originalPrice":122.5,"image":"https://menu-img.mcd.cn/pcm/prod/menu/20260304/product/MS_9900005321_320.png","cat":"小食拼盘/多人餐","tags":["麦金卡"],"kcal":null,"kcalSource":"combo-implausible","kcalParts":["麦辣鸡腿汉堡 2029","板烧鸡腿堡 1638","中薯条 1210","薄皮焦香V翅 804","可乐中杯 616"]}]},"nutrition":[{"name":"猪柳麦满分","energyKj":1288,"kcal":308,"protein":308,"fat":16,"carb":16,"sodium":24,"calcium":781},{"name":"猪柳蛋麦满分","energyKj":1618,"kcal":387,"protein":387,"fat":23,"carb":21,"sodium":25,"calcium":846},{"name":"烟肉蛋麦满分","energyKj":1089,"kcal":260,"protein":260,"fat":16,"carb":10,"sodium":24,"calcium":483},{"name":"火腿扒麦满分","energyKj":1092,"kcal":261,"protein":261,"fat":14,"carb":12,"sodium":24,"calcium":608},{"name":"中薯条","energyKj":1210,"kcal":289,"protein":289,"fat":4,"carb":12,"sodium":38,"calcium":165},{"name":"大薯条","energyKj":1587,"kcal":379,"protein":379,"fat":6,"carb":16,"sodium":50,"calcium":216},{"name":"小薯条","energyKj":877,"kcal":210,"protein":210,"fat":3,"carb":9,"sodium":28,"calcium":120},{"name":"迷你薯条","energyKj":444,"kcal":106,"protein":106,"fat":2,"carb":4,"sodium":14,"calcium":61},{"name":"圆筒冰淇淋","energyKj":391,"kcal":93,"protein":93,"fat":2,"carb":3,"sodium":14,"calcium":36},{"name":"麦乐鸡5块","energyKj":890,"kcal":213,"protein":213,"fat":12,"carb":12,"sodium":13,"calcium":422},{"name":"大杯玉米杯","energyKj":365,"kcal":87,"protein":87,"fat":4,"carb":1,"sodium":12,"calcium":2},{"name":"小杯玉米杯","energyKj":223,"kcal":53,"protein":53,"fat":2,"carb":1,"sodium":7,"calcium":1},{"name":"麦辣鸡翅-2块","energyKj":937,"kcal":224,"protein":224,"fat":13,"carb":15,"sodium":9,"calcium":537},{"name":"朱古力新地","energyKj":1178,"kcal":282,"protein":282,"fat":5,"carb":9,"sodium":44,"calcium":126},{"name":"草莓新地","energyKj":1027,"kcal":245,"protein":245,"fat":4,"carb":6,"sodium":43,"calcium":84},{"name":"奥利奥麦旋风","energyKj":1115,"kcal":266,"protein":266,"fat":5,"carb":9,"sodium":40,"calcium":116},{"name":"草莓麦旋风","energyKj":1234,"kcal":295,"protein":295,"fat":6,"carb":9,"sodium":47,"calcium":122},{"name":"香芋派","energyKj":971,"kcal":232,"protein":232,"fat":2,"carb":12,"sodium":28,"calcium":159},{"name":"菠萝派","energyKj":925,"kcal":221,"protein":221,"fat":2,"carb":11,"sodium":27,"calcium":147},{"name":"大脆鸡扒麦满分","energyKj":1510,"kcal":361,"protein":361,"fat":16,"carb":17,"sodium":35,"calcium":804},{"name":"原味板烧鸡腿麦满分","energyKj":1029,"kcal":246,"protein":246,"fat":15,"carb":9,"sodium":25,"calcium":611},{"name":"双层原味板烧鸡腿麦满分","energyKj":1486,"kcal":355,"protein":355,"fat":23,"carb":17,"sodium":27,"calcium":984},{"name":"吉士汉堡包","energyKj":1231,"kcal":294,"protein":294,"fat":16,"carb":12,"sodium":30,"calcium":673},{"name":"双层吉士汉堡","energyKj":1796,"kcal":429,"protein":429,"fat":27,"carb":22,"sodium":31,"calcium":1017},{"name":"麦香鸡","energyKj":1546,"kcal":370,"protein":369,"fat":15,"carb":17,"sodium":39,"calcium":731},{"name":"麦香鱼","energyKj":1359,"kcal":325,"protein":325,"fat":16,"carb":13,"sodium":35,"calcium":556},{"name":"麦辣鸡腿汉堡","energyKj":2029,"kcal":485,"protein":485,"fat":24,"carb":24,"sodium":42,"calcium":1208},{"name":"板烧鸡腿堡","energyKj":1638,"kcal":391,"protein":391,"fat":23,"carb":17,"sodium":35,"calcium":1041},{"name":"巨无霸","energyKj":2146,"kcal":513,"protein":513,"fat":27,"carb":26,"sodium":42,"calcium":961},{"name":"培根蔬萃双层牛堡","energyKj":1850,"kcal":442,"protein":442,"fat":24,"carb":23,"sodium":34,"calcium":728},{"name":"可乐中杯","energyKj":616,"kcal":147,"protein":147,"fat":0,"carb":0,"sodium":36,"calcium":0},{"name":"可乐大杯","energyKj":936,"kcal":224,"protein":224,"fat":0,"carb":0,"sodium":55,"calcium":0},{"name":"可乐小杯","energyKj":446,"kcal":107,"protein":107,"fat":0,"carb":0,"sodium":26,"calcium":0},{"name":"雪碧中杯","energyKj":440,"kcal":105,"protein":105,"fat":0,"carb":0,"sodium":26,"calcium":29},{"name":"雪碧大杯","energyKj":669,"kcal":160,"protein":160,"fat":0,"carb":0,"sodium":39,"calcium":45},{"name":"雪碧小杯","energyKj":319,"kcal":76,"protein":76,"fat":0,"carb":0,"sodium":19,"calcium":21},{"name":"无糖可口可乐中杯","energyKj":0,"kcal":0,"protein":0,"fat":0,"carb":0,"sodium":1,"calcium":35},{"name":"无糖可口可乐大杯","energyKj":0,"kcal":0,"protein":0,"fat":0,"carb":0,"sodium":1,"calcium":53},{"name":"无糖可口可乐小杯","energyKj":0,"kcal":0,"protein":0,"fat":0,"carb":0,"sodium":0,"calcium":25},{"name":"大杯鲜萃咖啡","energyKj":54,"kcal":13,"protein":13,"fat":1,"carb":0,"sodium":0,"calcium":3},{"name":"小杯鲜萃咖啡","energyKj":63,"kcal":15,"protein":15,"fat":1,"carb":0,"sodium":3,"calcium":2},{"name":"锡兰红茶","energyKj":8,"kcal":2,"protein":2,"fat":0,"carb":0,"sodium":0,"calcium":0},{"name":"热朱古力","energyKj":525,"kcal":125,"protein":125,"fat":2,"carb":2,"sodium":22,"calcium":107},{"name":"纯牛奶（盒装）","energyKj":541,"kcal":129,"protein":129,"fat":7,"carb":7,"sodium":10,"calcium":73},{"name":"麦旋酷阳光橙","energyKj":955,"kcal":228,"protein":228,"fat":1,"carb":2,"sodium":50,"calcium":77},{"name":"浓缩咖啡","energyKj":54,"kcal":13,"protein":13,"fat":1,"carb":0,"sodium":2,"calcium":0},{"name":"那么大鸡排","energyKj":1612,"kcal":385,"protein":385,"fat":24,"carb":21,"sodium":24,"calcium":996},{"name":"阳光柠檬红茶中杯","energyKj":488,"kcal":117,"protein":117,"fat":0,"carb":0,"sodium":29,"calcium":17},{"name":"阳光柠檬红茶大杯","energyKj":743,"kcal":178,"protein":178,"fat":0,"carb":0,"sodium":43,"calcium":25},{"name":"阳光柠檬红茶小杯","energyKj":354,"kcal":85,"protein":85,"fat":0,"carb":0,"sodium":21,"calcium":12},{"name":"脆薯饼","energyKj":612,"kcal":146,"protein":146,"fat":1,"carb":9,"sodium":14,"calcium":311},{"name":"脆香油条","energyKj":844,"kcal":202,"protein":202,"fat":5,"carb":12,"sodium":19,"calcium":230},{"name":"100%苹果汁","energyKj":368,"kcal":88,"protein":88,"fat":0,"carb":0,"sodium":21,"calcium":0},{"name":"汉堡包","energyKj":1039,"kcal":248,"protein":248,"fat":13,"carb":8,"sodium":29,"calcium":492},{"name":"麦乐鸡4块","energyKj":712,"kcal":170,"protein":170,"fat":10,"carb":10,"sodium":11,"calcium":337},{"name":"纯悦","energyKj":0,"kcal":0,"protein":0,"fat":0,"carb":0,"sodium":0,"calcium":0},{"name":"苹果片","energyKj":133,"kcal":32,"protein":32,"fat":0,"carb":0,"sodium":7,"calcium":0},{"name":"不素之霸双层牛堡","energyKj":2062,"kcal":493,"protein":493,"fat":28,"carb":27,"sodium":34,"calcium":1012},{"name":"双层深海鳕鱼堡","energyKj":2029,"kcal":485,"protein":485,"fat":28,"carb":21,"sodium":46,"calcium":917},{"name":"儿童鱼排堡","energyKj":1126,"kcal":269,"protein":269,"fat":15,"carb":6,"sodium":36,"calcium":442},{"name":"培根安格斯厚牛堡","energyKj":2959,"kcal":707,"protein":707,"fat":34,"carb":44,"sodium":43,"calcium":1037},{"name":"芝士安格斯厚牛堡","energyKj":2914,"kcal":696,"protein":696,"fat":32,"carb":44,"sodium":43,"calcium":897},{"name":"yeyeyeye奶冻款","energyKj":932,"kcal":223,"protein":223,"fat":1,"carb":4,"sodium":43,"calcium":37},{"name":"皮蛋鸡肉粥","energyKj":558,"kcal":133,"protein":133,"fat":6,"carb":3,"sodium":20,"calcium":611},{"name":"雪菜脆笋鸡肉粥","energyKj":504,"kcal":120,"protein":120,"fat":4,"carb":2,"sodium":22,"calcium":552},{"name":"猪柳炒双蛋堡","energyKj":1827,"kcal":437,"protein":437,"fat":25,"carb":24,"sodium":29,"calcium":705},{"name":"yeyeyeye爆珠款","energyKj":889,"kcal":212,"protein":212,"fat":1,"carb":3,"sodium":42,"calcium":122},{"name":"柠檬拉明顿","energyKj":506,"kcal":121,"protein":121,"fat":2,"carb":7,"sodium":12,"calcium":35},{"name":"芝士双层安格斯厚牛堡","energyKj":4195,"kcal":1003,"protein":1003,"fat":58,"carb":65,"sodium":46,"calcium":1373},{"name":"培根双层安格斯厚牛堡","energyKj":4128,"kcal":987,"protein":987,"fat":55,"carb":64,"sodium":46,"calcium":1191},{"name":"火腿扒早安营养卷","energyKj":1857,"kcal":444,"protein":444,"fat":16,"carb":24,"sodium":39,"calcium":1065},{"name":"麦麦脆汁鸡-琵琶腿","energyKj":1372,"kcal":328,"protein":328,"fat":21,"carb":20,"sodium":16,"calcium":905},{"name":"德式图林根香肠","energyKj":366,"kcal":87,"protein":87,"fat":5,"carb":6,"sodium":2,"calcium":293},{"name":"图林根香肠早安营养卷","energyKj":1779,"kcal":425,"protein":425,"fat":14,"carb":23,"sodium":38,"calcium":977},{"name":"麦麦脆汁鸡-带骨里脊","energyKj":1389,"kcal":332,"protein":332,"fat":22,"carb":18,"sodium":16,"calcium":812},{"name":"【美汁源】“黄金橙橙”","energyKj":691,"kcal":165,"protein":165,"fat":0,"carb":0,"sodium":41,"calcium":53},{"name":"优品豆浆大杯","energyKj":844,"kcal":202,"protein":202,"fat":8,"carb":4,"sodium":33,"calcium":43},{"name":"优品豆浆小杯","energyKj":633,"kcal":151,"protein":151,"fat":6,"carb":3,"sodium":25,"calcium":32},{"name":"浓浓黑巧雪冰中杯","energyKj":1501,"kcal":359,"protein":359,"fat":8,"carb":12,"sodium":51,"calcium":224},{"name":"浓浓黑巧雪冰大杯","energyKj":1857,"kcal":444,"protein":444,"fat":11,"carb":14,"sodium":65,"calcium":258},{"name":"特浓奶香雪冰中杯","energyKj":1124,"kcal":269,"protein":269,"fat":6,"carb":11,"sodium":36,"calcium":180},{"name":"特浓奶香雪冰大杯","energyKj":1291,"kcal":309,"protein":309,"fat":7,"carb":12,"sodium":42,"calcium":192},{"name":"浓浓抹茶雪冰中杯","energyKj":1208,"kcal":289,"protein":289,"fat":7,"carb":11,"sodium":39,"calcium":181},{"name":"浓浓抹茶雪冰大杯","energyKj":1418,"kcal":339,"protein":339,"fat":8,"carb":12,"sodium":48,"calcium":194},{"name":"热牛奶中杯","energyKj":738,"kcal":176,"protein":176,"fat":10,"carb":8,"sodium":15,"calcium":101},{"name":"热牛奶大杯","energyKj":1006,"kcal":240,"protein":240,"fat":13,"carb":11,"sodium":21,"calcium":137},{"name":"热牛奶小杯","energyKj":617,"kcal":147,"protein":147,"fat":8,"carb":7,"sodium":13,"calcium":84},{"name":"冰牛奶中杯","energyKj":939,"kcal":224,"protein":224,"fat":13,"carb":11,"sodium":19,"calcium":128},{"name":"冰牛奶大杯","energyKj":1127,"kcal":269,"protein":269,"fat":15,"carb":13,"sodium":23,"calcium":154},{"name":"冰牛奶小杯","energyKj":617,"kcal":147,"protein":147,"fat":8,"carb":7,"sodium":13,"calcium":84},{"name":"冰奶铁中杯","energyKj":618,"kcal":148,"protein":148,"fat":8,"carb":7,"sodium":13,"calcium":77},{"name":"冰奶铁大杯","energyKj":678,"kcal":162,"protein":162,"fat":9,"carb":7,"sodium":15,"calcium":85},{"name":"冰奶铁小杯","energyKj":358,"kcal":86,"protein":86,"fat":5,"carb":4,"sodium":8,"calcium":44},{"name":"热奶铁中杯","energyKj":779,"kcal":186,"protein":186,"fat":11,"carb":8,"sodium":17,"calcium":99},{"name":"热奶铁大杯","energyKj":1040,"kcal":249,"protein":249,"fat":14,"carb":11,"sodium":22,"calcium":134},{"name":"热奶铁小杯","energyKj":559,"kcal":134,"protein":134,"fat":8,"carb":6,"sodium":12,"calcium":72},{"name":"冰燕麦奶铁中杯","energyKj":554,"kcal":132,"protein":132,"fat":3,"carb":5,"sodium":17,"calcium":87},{"name":"冰燕麦奶铁大杯","energyKj":608,"kcal":145,"protein":145,"fat":4,"carb":5,"sodium":19,"calcium":96},{"name":"冰燕麦奶铁小杯","energyKj":322,"kcal":77,"protein":77,"fat":2,"carb":3,"sodium":10,"calcium":50},{"name":"热燕麦奶铁中杯","energyKj":697,"kcal":167,"protein":167,"fat":4,"carb":6,"sodium":22,"calcium":112},{"name":"热燕麦奶铁大杯","energyKj":929,"kcal":222,"protein":222,"fat":5,"carb":8,"sodium":29,"calcium":152},{"name":"热燕麦奶铁小杯","energyKj":500,"kcal":120,"protein":120,"fat":3,"carb":5,"sodium":16,"calcium":81},{"name":"冰美式中杯","energyKj":54,"kcal":13,"protein":13,"fat":1,"carb":0,"sodium":2,"calcium":0},{"name":"冰美式大杯","energyKj":60,"kcal":14,"protein":14,"fat":1,"carb":0,"sodium":2,"calcium":0},{"name":"冰美式小杯","energyKj":41,"kcal":10,"protein":10,"fat":1,"carb":0,"sodium":1,"calcium":0},{"name":"热美式中杯","energyKj":54,"kcal":13,"protein":13,"fat":1,"carb":0,"sodium":2,"calcium":0},{"name":"热美式大杯","energyKj":60,"kcal":14,"protein":14,"fat":1,"carb":0,"sodium":2,"calcium":0},{"name":"热美式小杯","energyKj":41,"kcal":10,"protein":10,"fat":1,"carb":0,"sodium":1,"calcium":0},{"name":"冰焦糖玛奇朵","energyKj":618,"kcal":148,"protein":148,"fat":8,"carb":7,"sodium":13,"calcium":77},{"name":"热焦糖玛奇朵","energyKj":698,"kcal":167,"protein":167,"fat":9,"carb":7,"sodium":15,"calcium":88},{"name":"卡布奇诺中杯","energyKj":698,"kcal":167,"protein":167,"fat":9,"carb":7,"sodium":15,"calcium":88},{"name":"卡布奇诺大杯","energyKj":932,"kcal":223,"protein":223,"fat":13,"carb":10,"sodium":20,"calcium":120},{"name":"冰浓浓燕麦黑巧中杯","energyKj":500,"kcal":120,"protein":120,"fat":2,"carb":5,"sodium":16,"calcium":87},{"name":"冰浓浓燕麦黑巧大杯","energyKj":547,"kcal":131,"protein":131,"fat":3,"carb":5,"sodium":17,"calcium":95},{"name":"冰燕麦奶中杯","energyKj":833,"kcal":199,"protein":199,"fat":4,"carb":8,"sodium":26,"calcium":145},{"name":"冰燕麦奶大杯","energyKj":1000,"kcal":239,"protein":239,"fat":5,"carb":9,"sodium":32,"calcium":174},{"name":"冰燕麦奶小杯","energyKj":547,"kcal":131,"protein":131,"fat":3,"carb":5,"sodium":17,"calcium":95},{"name":"热燕麦奶中杯","energyKj":655,"kcal":157,"protein":157,"fat":3,"carb":6,"sodium":21,"calcium":114},{"name":"热燕麦奶大杯","energyKj":893,"kcal":213,"protein":213,"fat":4,"carb":8,"sodium":28,"calcium":156},{"name":"热燕麦奶小杯","energyKj":547,"kcal":131,"protein":131,"fat":3,"carb":5,"sodium":17,"calcium":95},{"name":"冰浓浓抹茶牛奶中杯","energyKj":821,"kcal":196,"protein":196,"fat":8,"carb":6,"sodium":25,"calcium":80},{"name":"冰浓浓抹茶牛奶大杯","energyKj":1004,"kcal":240,"protein":240,"fat":9,"carb":7,"sodium":33,"calcium":89},{"name":"热浓浓抹茶牛奶中杯","energyKj":996,"kcal":238,"protein":238,"fat":11,"carb":8,"sodium":29,"calcium":104},{"name":"热浓浓抹茶牛奶大杯","energyKj":1393,"kcal":333,"protein":333,"fat":14,"carb":12,"sodium":41,"calcium":142},{"name":"冰浓浓黑巧中杯","energyKj":563,"kcal":135,"protein":135,"fat":8,"carb":6,"sodium":12,"calcium":77},{"name":"冰浓浓黑巧大杯","energyKj":617,"kcal":147,"protein":147,"fat":8,"carb":7,"sodium":13,"calcium":84},{"name":"热浓浓黑巧中杯","energyKj":738,"kcal":176,"protein":176,"fat":10,"carb":8,"sodium":15,"calcium":101},{"name":"热浓浓黑巧大杯","energyKj":1006,"kcal":240,"protein":240,"fat":13,"carb":11,"sodium":21,"calcium":137},{"name":"川宁伯爵红茶","energyKj":7,"kcal":2,"protein":2,"fat":0,"carb":0,"sodium":0,"calcium":0},{"name":"抹茶阿芙佳朵","energyKj":613,"kcal":147,"protein":147,"fat":3,"carb":4,"sodium":23,"calcium":50},{"name":"咖啡阿芙佳朵","energyKj":583,"kcal":139,"protein":139,"fat":4,"carb":4,"sodium":21,"calcium":49},{"name":"热浓浓燕麦黑巧中杯","energyKj":655,"kcal":157,"protein":157,"fat":3,"carb":6,"sodium":21,"calcium":114},{"name":"热浓浓燕麦黑巧大杯","energyKj":893,"kcal":213,"protein":213,"fat":4,"carb":8,"sodium":28,"calcium":156},{"name":"草莓拉明顿","energyKj":507,"kcal":121,"protein":121,"fat":2,"carb":8,"sodium":11,"calcium":34},{"name":"原味板烧鸡腿炒双蛋堡","energyKj":1754,"kcal":419,"protein":419,"fat":27,"carb":21,"sodium":30,"calcium":715},{"name":"双层猪柳蛋麦满分","energyKj":2148,"kcal":513,"protein":513,"fat":29,"carb":32,"sodium":26,"calcium":1210},{"name":"双层火腿扒麦满分","energyKj":1611,"kcal":385,"protein":385,"fat":21,"carb":22,"sodium":26,"calcium":979},{"name":"脆脆薯条","energyKj":1168,"kcal":279,"protein":279,"fat":4,"carb":14,"sodium":32,"calcium":540},{"name":"麦麦趣鸡球","energyKj":1113,"kcal":266,"protein":266,"fat":17,"carb":13,"sodium":19,"calcium":789},{"name":"酥酥多笋卷","energyKj":1431,"kcal":342,"protein":342,"fat":14,"carb":15,"sodium":36,"calcium":1044},{"name":"薄皮焦香V翅","energyKj":804,"kcal":192,"protein":192,"fat":17,"carb":11,"sodium":6,"calcium":594},{"name":"蜜汁BBQ风味薄皮脆汁鸡-带骨里脊","energyKj":637,"kcal":152,"protein":152,"fat":20,"carb":5,"sodium":6,"calcium":635},{"name":"蜜汁BBQ风味薄皮脆汁鸡-琵琶腿","energyKj":724,"kcal":173,"protein":173,"fat":18,"carb":9,"sodium":5,"calcium":547},{"name":"果然多肉","energyKj":2001,"kcal":478,"protein":478,"fat":36,"carb":17,"sodium":44,"calcium":1343},{"name":"“苹板”支撑Pro","energyKj":1993,"kcal":476,"protein":476,"fat":25,"carb":18,"sodium":50,"calcium":1077},{"name":"专“薯鱼”你","energyKj":1936,"kcal":463,"protein":463,"fat":18,"carb":17,"sodium":57,"calcium":652},{"name":"绝代双翅","energyKj":1964,"kcal":469,"protein":469,"fat":32,"carb":27,"sodium":23,"calcium":1167},{"name":"牛气满满","energyKj":2073,"kcal":495,"protein":495,"fat":26,"carb":24,"sodium":42,"calcium":764},{"name":"蜜汁快乐","energyKj":1081,"kcal":258,"protein":258,"fat":22,"carb":9,"sodium":20,"calcium":721},{"name":"迷你朱古力新地","energyKj":586,"kcal":140,"protein":140,"fat":3,"carb":4,"sodium":22,"calcium":63},{"name":"迷你草莓新地","energyKj":511,"kcal":122,"protein":122,"fat":2,"carb":3,"sodium":21,"calcium":42},{"name":"鲜蔬蛋沙拉叠叠卷","energyKj":1114,"kcal":266,"protein":266,"fat":11,"carb":14,"sodium":24,"calcium":518},{"name":"鸡肉蛋沙拉叠叠卷","energyKj":1621,"kcal":387,"protein":387,"fat":17,"carb":21,"sodium":31,"calcium":842},{"name":"中杯怡泉+C","energyKj":461,"kcal":110,"protein":110,"fat":0,"carb":0,"sodium":27,"calcium":0},{"name":"大杯怡泉+C","energyKj":701,"kcal":168,"protein":168,"fat":0,"carb":0,"sodium":41,"calcium":0},{"name":"蒜了吧黄油风味薄皮脆汁鸡-琵琶腿","energyKj":688,"kcal":164,"protein":164,"fat":19,"carb":6,"sodium":6,"calcium":867},{"name":"蒜了吧黄油风味薄皮脆汁鸡-带骨里脊","energyKj":526,"kcal":126,"protein":126,"fat":19,"carb":2,"sodium":4,"calcium":750},{"name":"柠萌风味薄皮焦香V翅","energyKj":855,"kcal":204,"protein":204,"fat":18,"carb":11,"sodium":6,"calcium":768}],"coupons":[{"name":"免费脆薯饼","image":"https://img.mcd.cn/cms/images/858839306b7cca66.png","status":"CAN_GET","label":"可领取"},{"name":"11.9元麦辣鸡腿堡","image":"https://mcd-portal-prod-cos1-1300270282.cos.ap-shanghai.myqcloud.com/campaign/prod/campaign-offer/coupon/428e50a23a7243b497691f44f55df3a6/%E9%BA%A6%E8%BE%A3%E9%B8%A1%E8%85%BF%E5%A0%A1600x600.png?sign=q-sign-algorithm%3Dsha1%26q-ak%3DAKIDCD6mEcX25tVrjNxiPvEICas0uXyBKIBs%26q-sign-time%3D1792390870%3B1950070870%26q-key-time%3D1792390870%3B1950070870%26q-header-list%3D%26q-url-param-list%3D%26q-signature%3D9335556a091f7531c195c391c1c4a474ab561030","status":"HAVING_RECEIVE","label":"已领取"},{"name":"19.9元王牌炸鸡任选2","image":"https://mcd-portal-prod-cos1-1300270282.cos.ap-shanghai.myqcloud.com/campaign/prod/campaign-offer/coupon/3d8aad332ed94030aca790068eb56054/%E7%8E%8B%E7%89%8C%E7%82%B8%E9%B8%A1%E4%BB%BB%E9%80%892%20600x600.png?sign=q-sign-algorithm%3Dsha1%26q-ak%3DAKIDCD6mEcX25tVrjNxiPvEICas0uXyBKIBs%26q-sign-time%3D1792390820%3B1950070820%26q-key-time%3D1792390820%3B1950070820%26q-header-list%3D%26q-url-param-list%3D%26q-signature%3D8071268ddd60571549998be5267e1c7b0b71284a","status":"HAVING_RECEIVE","label":"已领取"}],"campaigns":["麦当劳「我就喜欢」限定丝巾正式开售🔥","韩式风味蘸酱上新❤️就「酱」心有所「薯」","麦当劳 X PEACEMINUSONE","麦当劳 X PEACEMINUSONE","麦当劳联动G-DRAGON","🫐一口爆汁！蓝莓爆爆珠麦旋风上新","🍫麦咖啡13.9r浓浓黑巧来啦！","麦咖啡一早现磨🥳元气早餐震撼来袭！"],"samples":[]};</script>
+<script>
+const $ = id => document.getElementById(id);
+const PREFS = [
+  ['diet','减脂'],['nosaucce','不要酱'],['nobeef','不吃牛肉'],
+  ['nospicy','不吃辣'],['nofried','不吃炸物'],['noice','去冰'],['veggie','素食']
+];
+const state = { hc: 3, budget: 90, prefs: [new Set(), new Set(), new Set()], store: '', city: '' };
+let plan = null, curMode = null, pollTimer = null;
+
+function toast(m){
+  const t = $('toast'); t.textContent = m; t.classList.add('on');
+  clearTimeout(t._t); t._t = setTimeout(() => t.classList.remove('on'), 2000);
+}
+async function api(path, opts){
+  const r = await fetch(path, opts);
+  const j = await r.json().catch(() => ({ ok:false, error:'返回异常' }));
+  if (!j.ok) throw new Error(j.error || '请求失败');
+  return j;
+}
+const money = n => '¥' + (Math.round(n * 100) / 100).toFixed(1);
+
+/* ---------- 在线静态版：没有后端时，用真实 MCP 数据快照在浏览器里算 ---------- */
+let SNAP = null, LIVE = null;
+async function snapshot(){
+  if (SNAP) return SNAP;
+  SNAP = window.__SNAPSHOT__ || await (await fetch('snapshot.json')).json();
+  SNAP._table = new Map(SNAP.nutrition.map(n => [n.name, n]));
+  SNAP._menuCount = Object.values(SNAP.catalog).reduce((a, b) => a + b.length, 0);
+  return SNAP;
+}
+function withTimeout(p, ms){
+  return Promise.race([p, new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), ms))]);
+}
+async function isLive(){
+  if (LIVE !== null) return LIVE;
+  try {
+    const r = await withTimeout(fetch('/api/health'), 2500);
+    const j = await r.json().catch(() => ({}));
+    LIVE = !!(j && j.ok);
+  } catch { LIVE = false; }
+  return LIVE;
+}
+async function getPlan(payload){
+  if (await isLive()) {
+    try {
+      const j = await api('/api/plan', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify(payload),
+      });
+      return { ...j.plan, live: true };
+    } catch (e) { LIVE = false; }
+  }
+  const s = await snapshot();
+  const raw = window.Plan.planAll({
+    headcount: payload.headcount, budget: payload.budget,
+    prefs: payload.prefs, catalog: s.catalog, table: s._table,
+  });
+  if (!raw.length) throw new Error('这个预算和忌口组合下没能搭出可行方案');
+  const plans = raw.map(p => ({
+    ...p,
+    pricedBy: 'snapshot',
+    saved: Math.round((p.originalTotal - p.total) * 10) / 10,
+    price: { original: p.originalTotal, payable: p.total,
+      discount: Math.round((p.originalTotal - p.total) * 10) / 10, lines: [] },
+    kcalKnown: p.items.filter(i => i.kcal != null).length,
+    kcalTotal: p.items.length,
+    kcalPerPerson: p.totalKcal ? Math.round(p.totalKcal / payload.headcount) : null,
+  }));
+  const inBudget = plans.filter(p => p.total <= payload.budget);
+  const hero = inBudget.find(p => p.mode === 'balanced') || inBudget[0]
+    || plans.slice().sort((a, b) => a.total - b.total)[0];
+  const hard = [...new Set(payload.prefs.flat())]
+    .map(k => PREFS.find(p => p[0] === k)?.[1]).filter(Boolean);
+  const when = new Date(s.generatedAt).toLocaleString('zh-CN', { hour12: false });
+  return {
+    id: 'local', live: false,
+    storeName: s.store.storeName, storeCode: s.store.storeCode,
+    plans, heroMode: hero.mode, nutritionSize: s._table.size,
+    headcount: payload.headcount, budget: payload.budget,
+    mcpCalls: s.tools, priceRounds: 0, excludedByPriceCheck: 0,
+    summarySource: 'snapshot',
+    summary: `这是「${s.store.storeName}」的真实数据：菜单 ${s._menuCount} 个在售餐品、官方营养表 ${s._table.size} 条，由麦当劳 MCP 于 ${when} 拉取。
+${plans.length} 套方案里主推「${hero.modeName}」——落在 ${money(hero.total)}，人均 ${money(hero.perPerson)}${hero.totalKcal ? `，总热量约 ${hero.totalKcal} 大卡` : ''}${hard.length ? `。全桌忌口：${hard.join('、')}` : ''}。
+在线演示版按拉单时的菜单价计算；本地跑源码可直连 MCP，每一单都交给官方 calculate-price 实时核价。`,
+  };
+}
+
+function setHc(n){
+  n = Math.max(1, Math.min(8, n));
+  const old = state.prefs; state.hc = n;
+  state.prefs = Array.from({ length: n }, (_, i) => old[i] || new Set());
+  $('hc').textContent = n; renderPeople(); syncSub();
+}
+function setBudget(v){
+  state.budget = Math.max(20, Math.min(2000, Number(v) || 90));
+  $('budgetInput').value = state.budget;
+  [...$('budgetChips').children].forEach(c => c.classList.toggle('on', Number(c.dataset.v) === state.budget));
+  syncSub();
+}
+function syncSub(){
+  const tags = new Set();
+  state.prefs.forEach(s => s.forEach(x => tags.add(PREFS.find(p => p[0] === x)?.[1] || x)));
+  $('goSub').textContent = `${state.hc} 人 · ${money(state.budget)} · ` + (tags.size ? [...tags].join('、') : '暂无忌口');
+}
+function renderPeople(){
+  $('people').innerHTML = state.prefs.map((set, i) => `
+    <div class="person" data-i="${i}">
+      <div class="pname">${String(i + 1).padStart(2,'0')} <em>${i === 0 ? '发起人' : '第' + (i + 1) + '位'}</em></div>
+      <div class="tags">
+        ${PREFS.map(([k, label]) => `<div class="tag ${set.has(k) ? 'on' : ''}" data-p="${k}">${label}</div>`).join('')}
+      </div>
+    </div>`).join('');
+  $('people').querySelectorAll('.person').forEach(row => {
+    const i = Number(row.dataset.i);
+    row.querySelectorAll('.tag').forEach(tag => {
+      tag.onclick = () => {
+        const k = tag.dataset.p;
+        if (state.prefs[i].has(k)) state.prefs[i].delete(k); else state.prefs[i].add(k);
+        tag.classList.toggle('on'); syncSub();
+      };
+    });
+  });
+}
+
+$('minus').onclick = () => setHc(state.hc - 1);
+$('plus').onclick = () => setHc(state.hc + 1);
+$('budgetChips').onclick = e => { const c = e.target.closest('.chip'); if (c) setBudget(c.dataset.v); };
+$('budgetInput').oninput = e => setBudget(e.target.value);
+
+/* ---------- 门店 ---------- */
+async function loadStore(city){
+  try {
+    if (!(await isLive())) throw new Error('static');
+    const j = await api('/api/store?city=' + encodeURIComponent(city || state.city || '广州'));
+    state.store = j.storeCode; state.city = city || state.city;
+    $('storeName').innerHTML = j.storeName.replace('麦当劳','') + '<span class="meta">门店号 ' + j.storeCode + '</span>';
+    return;
+  } catch (e) {
+    try {
+      const s = await snapshot();
+      state.store = s.store.storeCode; state.city = s.city;
+      $('storeName').innerHTML = s.store.storeName.replace('麦当劳','') + '<span class="meta">门店号 ' + s.store.storeCode + '</span>';
+    } catch { $('storeName').textContent = '门店加载失败：' + e.message; }
+  }
+}
+$('changeStore').onclick = async () => {
+  $('storeModal').classList.add('on');
+  $('cityInput').value = state.city || '广州';
+  await searchStores();
+};
+$('closeStore').onclick = () => $('storeModal').classList.remove('on');
+$('searchStore').onclick = () => searchStores();
+async function searchStores(){
+  const kw = $('cityInput').value.trim() || '广州';
+  $('storeList').innerHTML = '<div class="sitem"><div class="n">搜索中…</div></div>';
+  try {
+    if (!(await isLive())) throw new Error('static');
+    const j = await api('/api/stores?city=' + encodeURIComponent(kw) + '&keyword=' + encodeURIComponent(kw));
+    if (!j.stores.length) { $('storeList').innerHTML = '<div class="sitem"><div class="n">没搜到，换个词试试</div></div>'; return; }
+    $('storeList').innerHTML = j.stores.map(s => `
+      <div class="sitem ${s.storeCode === state.store ? 'on' : ''}" data-c="${s.storeCode}">
+        <div class="n">${s.storeName}</div>
+        ${s.address ? `<div class="a">${s.address}</div>` : ''}
+        <div class="c">${s.storeCode}</div>
+      </div>`).join('');
+    bindStoreList();
+  } catch (e) {
+    try {
+      const s = await snapshot();
+      const hit = s.stores.filter(x => !kw || x.storeName.includes(kw) || x.address.includes(kw) || s.city.includes(kw));
+      const list = hit.length ? hit : s.stores;
+      $('storeList').innerHTML = list.map(x => `
+        <div class="sitem ${x.storeCode === state.store ? 'on' : ''}" data-c="${x.storeCode}">
+          <div class="n">${x.storeName}</div>
+          ${x.address ? `<div class="a">${x.address}</div>` : ''}
+          <div class="c">${x.storeCode}</div>
+        </div>`).join('');
+      bindStoreList();
+    } catch { $('storeList').innerHTML = '<div class="sitem"><div class="n">搜索失败：' + e.message + '</div></div>'; }
+  }
+}
+function bindStoreList(){
+  $('storeList').querySelectorAll('.sitem').forEach(el => {
+    el.onclick = async () => {
+      state.store = el.dataset.c;
+      $('storeModal').classList.remove('on');
+      $('storeName').innerHTML = el.querySelector('.n').textContent.replace('麦当劳','') +
+        '<span class="meta">门店号 ' + el.dataset.c + '</span>';
+    };
+  });
+}
+
+/* ---------- 生成方案 ---------- */
+$('go').onclick = async () => {
+  $('loading').classList.add('on');
+  $('loadSub').textContent = 'query-meals → calculate-price';
+  try {
+    const prefs = state.prefs.map(s => [...s]);
+    plan = await getPlan({ headcount: state.hc, budget: state.budget, prefs, storeCode: state.store });
+    curMode = plan.heroMode;
+    renderResult();
+    $('result').classList.add('on');
+    if (plan.live) startPoll(plan.id);
+  } catch (e) {
+    toast('搭配失败：' + e.message);
+  } finally {
+    $('loading').classList.remove('on');
+  }
+};
+
+function startPoll(id){
+  clearInterval(pollTimer);
+  let n = 0;
+  pollTimer = setInterval(async () => {
+    n++; if (n > 25) return clearInterval(pollTimer);
+    try {
+      const j = await api('/api/plan/' + id);
+      if (j.plan.summarySource === 'ai' && j.plan.summary) {
+        const el = document.querySelector('.ai .txt');
+        if (el) el.textContent = j.plan.summary;
+        document.querySelector('.ai')?.classList.remove('loading');
+        clearInterval(pollTimer);
+      }
+    } catch { clearInterval(pollTimer); }
+  }, 1600);
+}
+
+const KIND = [
+  ['share','共享大份','SHARE'],
+  ['main','每人主食','MAIN'],
+  ['side','桌上小食','SIDE'],
+  ['drink','喝的','DRINK'],
+  ['dessert','收尾甜点','DESSERT'],
+];
+
+function planCard(p, isHero){
+  const secs = KIND.map(([k, name, en]) => {
+    const items = p.items.filter(i => i.kind === k);
+    if (!items.length) return '';
+    return `<div class="sec"><span class="k">${en}</span><span class="n">${name}</span></div>` +
+      items.map(it => `
+        <div class="item">
+          <div class="row">
+            <div class="nm"><span class="q">${it.qty}×</span>${it.name}${
+              it.kcal != null ? `<span class="kc">${it.kcal}kcal</span>` : ''}</div>
+            <div class="pr">${(it.price * it.qty).toFixed(1)}</div>
+          </div>
+          <div class="why">${it.why}</div>
+        </div>`).join('');
+  }).filter(Boolean).join('<div class="dash thin"></div>');
+
+  const px = p.price || {};
+  const saved = (px.original && px.payable && px.original > px.payable)
+    ? `<div class="trow"><span>官方算价已省</span><span class="mint">-${money(px.original - px.payable)}</span></div>` : '';
+  const kcalLine = p.totalKcal != null
+    ? `<div class="trow"><span>总热量${p.kcalFull ? '' : `（${p.kcalKnown}/${p.kcalTotal} 项有数据）`}</span><span class="mint">${p.totalKcal} kcal</span></div>`
+    : '';
+
+  return `
+    <div class="receipt">
+      <div class="rhead">
+        <h2>${plan.storeName}</h2>
+        <p>${plan.headcount} 人 · 预算 ${money(plan.budget)} · 到店自取 · ${p.modeName}</p>
+      </div>
+      <div class="dash"></div>
+      ${secs}
+      <div class="dash"></div>
+      <div class="tot">
+        <div class="trow hl"><span>应付（官方核价）</span><b>${money(p.total)}</b></div>
+        ${px.original && Math.abs(px.original - p.total) > 0.05
+          ? `<div class="trow"><span>原价</span><span class="strike">${money(px.original)}</span></div>` : ''}
+        ${saved}
+        <div class="trow"><span>人均</span><span class="mint">${money(p.perPerson)}</span></div>
+        <div class="trow"><span>预算结余</span><span class="mint">${money(p.leftover)}</span></div>
+        ${kcalLine}
+      </div>
+      <div class="bbar"><i style="width:${Math.min(100, p.usage)}%"></i></div>
+      <div class="blabel"><span>已用 ${p.usage}%</span><span>预算 ${money(plan.budget)}</span></div>
+      <div class="note">
+        <b>下单备注：</b>${p.orderNote}
+        ${p.blockedList.length ? `<br><b>全桌避开：</b>${p.blockedList.join('、')}` : ''}
+        ${p.notes.length ? `<br>${p.notes.join('；')}` : ''}
+      </div>
+      <div class="stamp2">价格由麦当劳 MCP calculate-price 实时核出 · ${p.pricedBy === 'mcd-calculate-price' ? '官方价' : '本地估算'}</div>
+      ${isHero ? `<div class="ai loading"><span class="lbl">AI 参谋</span><span class="txt">${plan.summary || '正在生成点评…'}</span></div>` : ''}
+    </div>`;
+}
+
+function renderResult(){
+  extraLoaded = false;               // 卡片区已重建，附加信息需要重新挂
+  const hero = plan.plans.find(p => p.mode === curMode) || plan.plans[0];
+  curMode = hero.mode;
+
+  const tabs = plan.plans.map(p => `
+    <div class="tab ${p.mode === hero.mode ? 'on' : ''}" data-m="${p.mode}">
+      <span class="t">${p.modeName}</span>
+      <span class="s">${money(p.total)} · 人均${money(p.perPerson)}</span>
+    </div>`).join('');
+
+  $('rwrap').innerHTML = `
+    <div class="tabs">${tabs}</div>
+    <div id="cardBox">${planCard(hero, true)}</div>
+    <div class="acts">
+      <button class="again" onclick="closeResult()">重新搭配</button>
+      <button class="copy" onclick="copyOrder()">复制清单</button>
+    </div>
+    <div class="acts">
+      <button class="order" onclick="askOrder()">让 MCP 真下单</button>
+    </div>
+    <div class="extra" id="extraBox"></div>`;
+
+  $('rwrap').querySelectorAll('.tab').forEach(t => {
+    t.onclick = () => { curMode = t.dataset.m; renderResult(); };
+  });
+  // 切回主推方案且 AI 点评还没回来时，继续轮询
+  if (plan.live && hero.mode === plan.heroMode && plan.summarySource !== 'ai') startPoll(plan.id);
+  loadExtra();
+}
+
+async function getCampaigns(){
+  if (await isLive()) { try { return (await api('/api/campaigns')).campaigns || []; } catch { LIVE = false; } }
+  return ((await snapshot()).campaigns) || [];
+}
+async function getCoupons(){
+  if (await isLive()) { try { return (await api('/api/coupons')).coupons || []; } catch { LIVE = false; } }
+  return ((await snapshot()).coupons) || [];
+}
+let extraLoaded = false;
+async function loadExtra(){
+  if (extraLoaded) return;
+  extraLoaded = true;
+  const box = $('extraBox');
+  if (!box) return;
+  try {
+    const list = await getCampaigns();
+    if (list.length) {
+      box.insertAdjacentHTML('beforeend', `
+        <div class="card">
+          <h4><span class="b">MCP</span>今天店里有什么新鲜事</h4>
+          <ul>${list.slice(0, 5).map(x => `<li><b>${x}</b></li>`).join('')}</ul>
+        </div>`);
+    }
+  } catch {}
+  try {
+    const coupons = await getCoupons();
+    if (coupons.length) {
+      const canGet = coupons.filter(x => x.status === 'CAN_GET');
+      box.insertAdjacentHTML('beforeend', `
+        <div class="card">
+          <h4><span class="b g">麦麦省</span>卡包里的券（${coupons.length} 张）</h4>
+          <div class="cpimg">${coupons.slice(0, 8).map(x =>
+            `<img src="${x.image}" alt="${x.name}" title="${x.name} · ${x.label}">`).join('')}</div>
+          <ul>${coupons.slice(0, 4).map(x => `<li><b>${x.name}</b> · ${x.label}</li>`).join('')}</ul>
+          ${canGet.length && plan && plan.live ? `<button class="btn2" id="claimBtn">一键领取 ${canGet.length} 张可领券</button>` : ''}
+        </div>`);
+      const cb = $('claimBtn');
+      if (cb) cb.onclick = async () => {
+        cb.disabled = true; cb.textContent = '领取中…';
+        try { const r = await api('/api/coupons/claim', { method: 'POST' }); toast(r.ok ? '已提交领取' : '领取未完成'); }
+        catch (e) { toast('领取失败：' + e.message); }
+      };
+    }
+  } catch {}
+}
+
+function closeResult(){
+  $('result').classList.remove('on');
+  clearInterval(pollTimer);
+}
+
+function curPlan(){ return plan.plans.find(p => p.mode === curMode) || plan.plans[0]; }
+
+function copyOrder(){
+  const p = curPlan(); if (!p) return;
+  const lines = ['【开饭参谋】' + plan.headcount + ' 人 · 预算 ' + money(plan.budget),
+    plan.storeName, '方案：' + p.modeName];
+  p.items.forEach(i => lines.push(`${i.qty}× ${i.name}  ${money(i.price * i.qty)}`));
+  lines.push('应付 ' + money(p.total) + '，人均 ' + money(p.perPerson));
+  if (p.totalKcal != null) lines.push('总热量约 ' + p.totalKcal + ' kcal');
+  lines.push('备注：' + p.orderNote);
+  const text = lines.join('\n');
+  if (navigator.clipboard) navigator.clipboard.writeText(text)
+    .then(() => toast('下单清单已复制'), () => fallbackCopy(text));
+  else fallbackCopy(text);
+}
+function fallbackCopy(text){
+  const ta = document.createElement('textarea');
+  ta.value = text; document.body.appendChild(ta); ta.select();
+  try { document.execCommand('copy'); toast('下单清单已复制'); } catch { toast('复制失败，请手动选择'); }
+  ta.remove();
+}
+
+let orderPayload = null;
+function askOrder(){
+  const p = curPlan(); if (!p) return;
+  if (plan && plan.live === false) {
+    toast('在线演示版不下单；本地运行源码可直连 MCP 下单');
+    return;
+  }
+  orderPayload = { confirm: true, storeCode: plan.storeCode,
+    items: p.items.map(i => ({ code: i.code, qty: i.qty })), remark: p.orderNote };
+  $('confirmText').innerHTML =
+    `将用麦当劳 MCP 创建<b>真实订单</b>：${plan.storeName}<br><br>` +
+    p.items.map(i => `${i.qty}× ${i.name}`).join('，') +
+    `<br><br>应付 <b>${money(p.total)}</b>，到店自取。`;
+  $('confirmBox').classList.add('on');
+}
+$('confirmNo').onclick = () => $('confirmBox').classList.remove('on');
+$('confirmYes').onclick = async () => {
+  $('confirmBox').classList.remove('on');
+  $('loading').classList.add('on');
+  $('loadSub').textContent = 'create-order';
+  try {
+    const r = await api('/api/order', {
+      method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(orderPayload)
+    });
+    toast(r.ok ? '订单已创建，请到店取餐' : ('下单未成功：' + (r.data?.message || '请查看返回')));
+  } catch (e) { toast('下单失败：' + e.message); }
+  finally { $('loading').classList.remove('on'); }
+};
+
+/* ---------- 启动 ---------- */
+(async () => {
+  renderPeople(); syncSub();
+  await loadStore('广州');
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,738 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#17120C">
+<title>开饭参谋 · 报人数、报预算，摆好一桌麦当劳</title>
+<style>
+:root{
+  --bg:#17120C; --bg2:#211A11;
+  --paper:#FBF5E6; --ink:#1B1712; --dim:#9C927F;
+  --gold:#FFC72C; --red:#DA291C; --mint:#19B57A;
+  --line:rgba(255,255,255,.10);
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;
+  background:
+    radial-gradient(900px 520px at 50% -12%, #2E2314 0%, transparent 70%),
+    radial-gradient(620px 420px at 105% 100%, #20281C 0%, transparent 62%),
+    var(--bg);
+  color:var(--paper); min-height:100vh; padding:0 0 118px; -webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:480px;margin:0 auto;padding:0 18px;}
+
+/* ---------- 头部 ---------- */
+header{padding:26px 0 18px;}
+.brand{font-size:31px;font-weight:800;letter-spacing:2px;line-height:1.1;}
+.brand b{color:var(--gold);}
+.stamp{
+  display:inline-block;margin-left:9px;vertical-align:8px;font-size:10px;letter-spacing:1px;
+  font-weight:700;color:var(--gold);border:1.5px solid var(--gold);border-radius:3px;
+  padding:2px 6px;transform:rotate(-6deg);
+}
+.tagline{margin-top:9px;font-size:12.5px;color:var(--dim);letter-spacing:.4px;line-height:1.65;}
+.tagline i{font-style:normal;color:var(--gold);}
+
+/* ---------- 门店条 ---------- */
+.storebar{
+  display:flex;align-items:center;gap:9px;background:rgba(255,255,255,.05);
+  border:1px solid var(--line);border-radius:13px;padding:11px 13px;margin-bottom:13px;
+}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--mint);flex:none;box-shadow:0 0 8px var(--mint);}
+.storebar .nm{flex:1;font-size:13px;font-weight:600;line-height:1.35;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.storebar .chg{font-size:11px;color:var(--gold);font-weight:700;flex:none;padding:4px 2px;}
+.storebar .meta{display:block;font-size:10.5px;color:var(--dim);font-weight:400;margin-top:2px;font-family:ui-monospace,Menlo,monospace;}
+
+/* ---------- 面板 ---------- */
+.panel{
+  background:rgba(255,255,255,.045);border:1px solid var(--line);
+  border-radius:18px;padding:16px 16px 18px;margin-bottom:13px;
+}
+.ptitle{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:700;color:#EDE4D2;margin-bottom:14px;}
+.idx{font-size:10px;font-weight:800;color:#2A1C05;background:var(--gold);border-radius:4px;
+  padding:2px 5px;letter-spacing:.5px;font-family:ui-monospace,Menlo,monospace;}
+.ptitle small{margin-left:auto;font-weight:400;font-size:11px;color:var(--dim);}
+
+.stepper{display:flex;align-items:center;justify-content:space-between;gap:12px;}
+.sbtn{width:52px;height:52px;border-radius:16px;border:1px solid var(--line);
+  background:rgba(255,255,255,.06);color:var(--paper);font-size:24px;font-weight:300;
+  display:flex;align-items:center;justify-content:center;cursor:pointer;}
+.sbtn:active{background:var(--gold);border-color:var(--gold);color:#2A1C05;}
+.hnum{flex:1;text-align:center;}
+.hnum b{font-size:42px;font-weight:800;font-family:ui-monospace,Menlo,monospace;letter-spacing:-1px;}
+.hnum span{font-size:13px;color:var(--dim);margin-left:4px;}
+
+.chips{display:flex;flex-wrap:wrap;gap:8px;}
+.chip{font-size:13px;padding:8px 13px;border-radius:10px;border:1px solid var(--line);
+  background:rgba(255,255,255,.04);color:#D8CDB8;cursor:pointer;user-select:none;transition:.15s;}
+.chip.on{background:var(--gold);border-color:var(--gold);color:#2A1C05;font-weight:700;}
+.custom{display:flex;align-items:center;gap:8px;margin-top:10px;}
+.custom input{flex:1;background:rgba(255,255,255,.05);border:1px solid var(--line);
+  border-radius:10px;padding:11px 13px;color:var(--paper);font-size:15px;outline:none;
+  font-family:ui-monospace,Menlo,monospace;}
+.custom input:focus{border-color:var(--gold);}
+.custom span{font-size:12px;color:var(--dim);}
+
+.person{border-top:1px dashed var(--line);padding:12px 0 2px;}
+.person:first-child{border-top:0;padding-top:0;}
+.pname{font-size:12px;color:var(--dim);margin-bottom:8px;font-family:ui-monospace,Menlo,monospace;}
+.pname em{font-style:normal;color:var(--mint);}
+.tags{display:flex;flex-wrap:wrap;gap:6px;}
+.tag{font-size:12px;padding:6px 10px;border-radius:8px;border:1px solid var(--line);
+  background:transparent;color:#B7AC98;cursor:pointer;transition:.15s;}
+.tag.on{background:rgba(25,181,122,.15);border-color:var(--mint);color:var(--mint);font-weight:600;}
+
+.bar{position:fixed;left:0;right:0;bottom:0;padding:13px 18px calc(13px + env(safe-area-inset-bottom));
+  background:linear-gradient(to top,var(--bg) 55%,transparent);z-index:20;}
+.cta{width:100%;max-width:480px;margin:0 auto;display:block;background:var(--gold);color:#2A1C05;
+  border:none;border-radius:16px;padding:16px;font-size:16px;font-weight:800;letter-spacing:1px;
+  box-shadow:0 8px 28px rgba(255,199,44,.26);cursor:pointer;}
+.cta:active{transform:scale(.99);opacity:.9;}
+.cta small{display:block;font-size:11px;font-weight:500;letter-spacing:.5px;opacity:.75;margin-top:3px;}
+
+/* ---------- 结果 ---------- */
+.result{position:fixed;inset:0;z-index:60;background:var(--bg);overflow-y:auto;
+  -webkit-overflow-scrolling:touch;display:none;padding:16px 14px 130px;}
+.result.on{display:block;}
+.rwrap{max-width:460px;margin:0 auto;}
+
+.tabs{display:flex;gap:7px;margin-bottom:13px;}
+.tab{flex:1;text-align:center;padding:11px 6px;border-radius:13px;border:1px solid var(--line);
+  background:rgba(255,255,255,.04);cursor:pointer;transition:.15s;}
+.tab .t{font-size:13px;font-weight:700;color:#CFC4AE;display:block;}
+.tab .s{font-size:11px;color:var(--dim);font-family:ui-monospace,Menlo,monospace;margin-top:3px;display:block;}
+.tab.on{background:var(--gold);border-color:var(--gold);}
+.tab.on .t{color:#2A1C05;}
+.tab.on .s{color:#6B5406;}
+
+.receipt{position:relative;background:var(--paper);color:var(--ink);border-radius:2px;
+  padding:24px 19px 20px;box-shadow:0 22px 56px rgba(0,0,0,.55);}
+.receipt::before,.receipt::after{content:'';position:absolute;left:0;right:0;height:10px;
+  background-size:10px 10px;background-repeat:repeat-x;}
+.receipt::before{top:-9px;background-image:radial-gradient(circle at 5px 10px,var(--paper) 5px,transparent 5.5px);}
+.receipt::after{bottom:-9px;background-image:radial-gradient(circle at 5px 0,var(--paper) 5px,transparent 5.5px);}
+
+.rhead{text-align:center;padding-bottom:12px;}
+.rhead h2{font-size:14.5px;font-weight:800;letter-spacing:.5px;}
+.rhead p{font-size:11px;color:#8A806C;margin-top:5px;font-family:ui-monospace,Menlo,monospace;}
+.dash{border-top:1.5px dashed #C9BFA6;margin:13px -4px;}
+.dash.thin{border-top-width:1px;}
+
+.sec{margin:15px 0 5px;display:flex;align-items:baseline;gap:7px;}
+.sec .k{font-size:9.5px;font-weight:800;letter-spacing:1.5px;color:#8A806C;font-family:ui-monospace,Menlo,monospace;}
+.sec .n{font-size:13px;font-weight:800;}
+.item{padding:7px 0 8px;}
+.item .row{display:flex;align-items:baseline;gap:8px;}
+.item .nm{flex:1;font-size:14px;font-weight:600;line-height:1.35;}
+.item .q{font-size:11px;color:#8A806C;font-family:ui-monospace,Menlo,monospace;margin-right:2px;}
+.item .pr{font-size:14px;font-weight:800;font-family:ui-monospace,Menlo,monospace;}
+.item .why{font-size:11px;color:#8A806C;line-height:1.5;margin-top:3px;}
+.item .why::before{content:'↳ ';opacity:.55;}
+.kc{font-size:10px;color:#A2957C;font-family:ui-monospace,Menlo,monospace;margin-left:5px;font-weight:600;}
+
+.tot{padding-top:4px;}
+.trow{display:flex;justify-content:space-between;align-items:baseline;font-size:13px;padding:4px 0;color:#5A5241;}
+.trow b{font-size:26px;font-weight:800;color:var(--ink);font-family:ui-monospace,Menlo,monospace;letter-spacing:-1px;}
+.trow.hl b{color:var(--red);}
+.trow .mint{color:#0F8C5C;font-weight:800;font-family:ui-monospace,Menlo,monospace;}
+.trow .strike{text-decoration:line-through;color:#A2957C;}
+
+.bbar{height:7px;border-radius:4px;background:#E4DAC3;overflow:hidden;margin:9px 0 5px;}
+.bbar i{display:block;height:100%;background:linear-gradient(90deg,var(--mint),var(--gold));border-radius:4px;}
+.blabel{display:flex;justify-content:space-between;font-size:10px;color:#8A806C;
+  font-family:ui-monospace,Menlo,monospace;}
+
+.note{margin-top:13px;background:#F0E7D2;border-left:3px solid var(--gold);border-radius:6px;
+  padding:10px 12px;font-size:12px;line-height:1.6;color:#5A5241;}
+.note b{color:var(--ink);}
+.stamp2{
+  margin-top:12px;text-align:center;font-size:10px;color:#8A806C;letter-spacing:.5px;
+  font-family:ui-monospace,Menlo,monospace;border-top:1px dashed #C9BFA6;padding-top:10px;
+}
+
+.ai{margin-top:13px;background:#1B1712;border-radius:12px;padding:13px;color:#EFE6D3;
+  font-size:13px;line-height:1.7;}
+.ai .lbl{font-size:9px;letter-spacing:1.5px;font-weight:800;color:#0B2419;background:var(--mint);
+  border-radius:3px;padding:2px 5px;margin-right:6px;vertical-align:1px;font-family:ui-monospace,Menlo,monospace;}
+.ai.loading{color:#8F8672;}
+.ai.loading::after{content:'▍';animation:blink 1s steps(2) infinite;color:var(--mint);}
+@keyframes blink{50%{opacity:0;}}
+
+.acts{display:flex;gap:9px;margin-top:16px;}
+.acts button{flex:1;border-radius:13px;padding:13px;font-size:13.5px;font-weight:700;border:none;cursor:pointer;}
+.acts .again{background:rgba(255,255,255,.08);color:var(--paper);border:1px solid var(--line);}
+.acts .copy{background:var(--mint);color:#08251A;}
+.acts .order{background:var(--red);color:#fff;}
+
+/* 活动 / 券 */
+.extra{margin-top:14px;}
+.card{background:rgba(255,255,255,.045);border:1px solid var(--line);border-radius:15px;padding:14px 15px;margin-bottom:11px;}
+.card h4{font-size:12.5px;font-weight:800;color:#EDE4D2;margin-bottom:10px;display:flex;align-items:center;gap:7px;}
+.card h4 .b{font-size:9px;font-weight:800;background:var(--red);color:#fff;border-radius:3px;
+  padding:2px 5px;letter-spacing:.5px;font-family:ui-monospace,Menlo,monospace;}
+.card h4 .b.g{background:var(--mint);}
+.card ul{list-style:none;}
+.card li{font-size:12px;color:#B7AC98;line-height:1.6;padding:5px 0;border-top:1px dashed var(--line);}
+.card li:first-child{border-top:0;}
+.card li b{color:#EDE4D2;font-weight:600;}
+.card .btn2{margin-top:9px;width:100%;background:rgba(255,199,44,.14);border:1px solid rgba(255,199,44,.4);
+  color:var(--gold);border-radius:10px;padding:10px;font-size:12.5px;font-weight:700;cursor:pointer;}
+.cpimg{display:flex;gap:8px;overflow-x:auto;padding-top:2px;}
+.cpimg img{width:56px;height:56px;border-radius:9px;flex:none;object-fit:cover;background:#0002;}
+
+/* 门店选择弹层 */
+.modal{position:fixed;inset:0;z-index:90;background:rgba(12,9,6,.94);display:none;
+  align-items:flex-end;justify-content:center;}
+.modal.on{display:flex;}
+.sheet{width:100%;max-width:480px;background:var(--bg2);border-radius:20px 20px 0 0;
+  padding:18px 18px calc(18px + env(safe-area-inset-bottom));max-height:78vh;overflow-y:auto;}
+.sheet h3{font-size:15px;font-weight:800;margin-bottom:12px;display:flex;align-items:center;gap:8px;}
+.sheet h3 .x{margin-left:auto;font-size:20px;color:var(--dim);cursor:pointer;font-weight:300;line-height:1;}
+.srow{display:flex;gap:9px;margin-bottom:11px;}
+.srow input{flex:1;background:rgba(255,255,255,.06);border:1px solid var(--line);border-radius:11px;
+  padding:11px 13px;color:var(--paper);font-size:14px;outline:none;}
+.srow button{background:var(--gold);color:#2A1C05;border:none;border-radius:11px;padding:0 16px;
+  font-weight:800;font-size:13px;cursor:pointer;}
+.slist{margin-top:6px;}
+.sitem{padding:11px 12px;border-radius:12px;border:1px solid var(--line);margin-bottom:8px;cursor:pointer;}
+.sitem.on{border-color:var(--gold);background:rgba(255,199,44,.09);}
+.sitem .n{font-size:13px;font-weight:600;}
+.sitem .a{font-size:11px;color:var(--dim);margin-top:3px;line-height:1.5;}
+.sitem .c{font-size:10px;color:#6E6553;font-family:ui-monospace,Menlo,monospace;margin-top:3px;}
+
+.loading{position:fixed;inset:0;z-index:120;background:rgba(23,18,12,.95);display:none;
+  align-items:center;justify-content:center;flex-direction:column;gap:16px;}
+.loading.on{display:flex;}
+.ring{width:42px;height:42px;border:3px solid rgba(255,255,255,.12);border-top-color:var(--gold);
+  border-radius:50%;animation:spin .8s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.loading p{font-size:12.5px;color:var(--dim);letter-spacing:.8px;}
+.loading .sub{font-size:10.5px;color:#6E6553;font-family:ui-monospace,Menlo,monospace;}
+
+.toast{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(251,245,230,.97);
+  color:var(--ink);padding:12px 20px;border-radius:10px;font-size:13px;font-weight:600;z-index:200;
+  display:none;box-shadow:0 10px 30px rgba(0,0,0,.4);max-width:80%;text-align:center;}
+.toast.on{display:block;}
+
+.confirm{position:fixed;inset:0;z-index:150;background:rgba(10,7,4,.9);display:none;
+  align-items:center;justify-content:center;padding:24px;}
+.confirm.on{display:flex;}
+.cbox{background:var(--bg2);border:1px solid var(--line);border-radius:16px;padding:20px;max-width:340px;}
+.cbox h4{font-size:15px;font-weight:800;margin-bottom:10px;}
+.cbox p{font-size:12.5px;color:#B7AC98;line-height:1.65;margin-bottom:16px;}
+.cbox .row2{display:flex;gap:9px;}
+.cbox .row2 button{flex:1;padding:12px;border-radius:11px;font-size:13px;font-weight:700;border:none;cursor:pointer;}
+.cbox .no{background:rgba(255,255,255,.08);color:#CFC4AE;}
+.cbox .yes{background:var(--red);color:#fff;}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header>
+    <div class="brand">开饭<b>参谋</b><span class="stamp">MCP</span></div>
+    <div class="tagline">报人数、报预算、报忌口 —— <i>30 秒摆好一桌</i>。<br>每一单都交给麦当劳官方算价引擎核过价。</div>
+  </header>
+
+  <div class="storebar" id="storeBar">
+    <span class="dot"></span>
+    <div class="nm" id="storeName">正在连接门店…<span class="meta" id="storeMeta">MCP</span></div>
+    <div class="chg" id="changeStore">换店 ›</div>
+  </div>
+
+  <section class="panel">
+    <div class="ptitle"><span class="idx">01</span>几个人吃<small>到店自取</small></div>
+    <div class="stepper">
+      <div class="sbtn" id="minus">−</div>
+      <div class="hnum"><b id="hc">3</b><span>人</span></div>
+      <div class="sbtn" id="plus">＋</div>
+    </div>
+  </section>
+
+  <section class="panel">
+    <div class="ptitle"><span class="idx">02</span>一共多少预算<small>含税总价</small></div>
+    <div class="chips" id="budgetChips">
+      <div class="chip" data-v="40">¥40</div>
+      <div class="chip" data-v="60">¥60</div>
+      <div class="chip on" data-v="90">¥90</div>
+      <div class="chip" data-v="150">¥150</div>
+    </div>
+    <div class="custom">
+      <input id="budgetInput" type="number" min="20" max="2000" value="90" inputmode="numeric">
+      <span>元 · 可改</span>
+    </div>
+  </section>
+
+  <section class="panel">
+    <div class="ptitle"><span class="idx">03</span>谁有讲究<small>忌口按人分开算</small></div>
+    <div id="people"></div>
+  </section>
+</div>
+
+<div class="bar"><button class="cta" id="go">开饭参谋 · 摆一桌<small id="goSub">3 人 · ¥90 · 暂无忌口</small></button></div>
+
+<div class="result" id="result"><div class="rwrap" id="rwrap"></div></div>
+
+<div class="modal" id="storeModal">
+  <div class="sheet">
+    <h3>选一家门店<span class="x" id="closeStore">×</span></h3>
+    <div class="srow">
+      <input id="cityInput" placeholder="城市或关键词，如 广州 / 天源路">
+      <button id="searchStore">搜</button>
+    </div>
+    <div class="slist" id="storeList"><div class="sitem"><div class="n">加载中…</div></div></div>
+  </div>
+</div>
+
+<div class="confirm" id="confirmBox">
+  <div class="cbox">
+    <h4>真的要下单吗？</h4>
+    <p id="confirmText">这会通过麦当劳 MCP 创建一笔<b>真实订单</b>，需要到店取餐并完成支付。请确认金额无误。</p>
+    <div class="row2">
+      <button class="no" id="confirmNo">再想想</button>
+      <button class="yes" id="confirmYes">确认下单</button>
+    </div>
+  </div>
+</div>
+
+<div class="loading" id="loading">
+  <div class="ring"></div>
+  <p>参谋正在翻菜单、核价格…</p>
+  <div class="sub" id="loadSub">query-meals → calculate-price</div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script src="planner.js"></script>
+<script>
+const $ = id => document.getElementById(id);
+const PREFS = [
+  ['diet','减脂'],['nosaucce','不要酱'],['nobeef','不吃牛肉'],
+  ['nospicy','不吃辣'],['nofried','不吃炸物'],['noice','去冰'],['veggie','素食']
+];
+const state = { hc: 3, budget: 90, prefs: [new Set(), new Set(), new Set()], store: '', city: '' };
+let plan = null, curMode = null, pollTimer = null;
+
+function toast(m){
+  const t = $('toast'); t.textContent = m; t.classList.add('on');
+  clearTimeout(t._t); t._t = setTimeout(() => t.classList.remove('on'), 2000);
+}
+async function api(path, opts){
+  const r = await fetch(path, opts);
+  const j = await r.json().catch(() => ({ ok:false, error:'返回异常' }));
+  if (!j.ok) throw new Error(j.error || '请求失败');
+  return j;
+}
+const money = n => '¥' + (Math.round(n * 100) / 100).toFixed(1);
+
+/* ---------- 在线静态版：没有后端时，用真实 MCP 数据快照在浏览器里算 ---------- */
+let SNAP = null, LIVE = null;
+async function snapshot(){
+  if (SNAP) return SNAP;
+  const r = await fetch('snapshot.json');
+  SNAP = await r.json();
+  SNAP._table = new Map(SNAP.nutrition.map(n => [n.name, n]));
+  SNAP._menuCount = Object.values(SNAP.catalog).reduce((a, b) => a + b.length, 0);
+  return SNAP;
+}
+function withTimeout(p, ms){
+  return Promise.race([p, new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), ms))]);
+}
+async function isLive(){
+  if (LIVE !== null) return LIVE;
+  try {
+    const r = await withTimeout(fetch('/api/health'), 2500);
+    const j = await r.json().catch(() => ({}));
+    LIVE = !!(j && j.ok);
+  } catch { LIVE = false; }
+  return LIVE;
+}
+async function getPlan(payload){
+  if (await isLive()) {
+    try {
+      const j = await api('/api/plan', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify(payload),
+      });
+      return { ...j.plan, live: true };
+    } catch (e) { LIVE = false; }
+  }
+  const s = await snapshot();
+  const raw = window.Plan.planAll({
+    headcount: payload.headcount, budget: payload.budget,
+    prefs: payload.prefs, catalog: s.catalog, table: s._table,
+  });
+  if (!raw.length) throw new Error('这个预算和忌口组合下没能搭出可行方案');
+  const plans = raw.map(p => ({
+    ...p,
+    pricedBy: 'snapshot',
+    saved: Math.round((p.originalTotal - p.total) * 10) / 10,
+    price: { original: p.originalTotal, payable: p.total,
+      discount: Math.round((p.originalTotal - p.total) * 10) / 10, lines: [] },
+    kcalKnown: p.items.filter(i => i.kcal != null).length,
+    kcalTotal: p.items.length,
+    kcalPerPerson: p.totalKcal ? Math.round(p.totalKcal / payload.headcount) : null,
+  }));
+  const inBudget = plans.filter(p => p.total <= payload.budget);
+  const hero = inBudget.find(p => p.mode === 'balanced') || inBudget[0]
+    || plans.slice().sort((a, b) => a.total - b.total)[0];
+  const hard = [...new Set(payload.prefs.flat())]
+    .map(k => PREFS.find(p => p[0] === k)?.[1]).filter(Boolean);
+  const when = new Date(s.generatedAt).toLocaleString('zh-CN', { hour12: false });
+  return {
+    id: 'local', live: false,
+    storeName: s.store.storeName, storeCode: s.store.storeCode,
+    plans, heroMode: hero.mode, nutritionSize: s._table.size,
+    headcount: payload.headcount, budget: payload.budget,
+    mcpCalls: s.tools, priceRounds: 0, excludedByPriceCheck: 0,
+    summarySource: 'snapshot',
+    summary: `这是「${s.store.storeName}」的真实数据：菜单 ${s._menuCount} 个在售餐品、官方营养表 ${s._table.size} 条，由麦当劳 MCP 于 ${when} 拉取。
+${plans.length} 套方案里主推「${hero.modeName}」——落在 ${money(hero.total)}，人均 ${money(hero.perPerson)}${hero.totalKcal ? `，总热量约 ${hero.totalKcal} 大卡` : ''}${hard.length ? `。全桌忌口：${hard.join('、')}` : ''}。
+在线演示版按拉单时的菜单价计算；本地跑源码可直连 MCP，每一单都交给官方 calculate-price 实时核价。`,
+  };
+}
+
+function setHc(n){
+  n = Math.max(1, Math.min(8, n));
+  const old = state.prefs; state.hc = n;
+  state.prefs = Array.from({ length: n }, (_, i) => old[i] || new Set());
+  $('hc').textContent = n; renderPeople(); syncSub();
+}
+function setBudget(v){
+  state.budget = Math.max(20, Math.min(2000, Number(v) || 90));
+  $('budgetInput').value = state.budget;
+  [...$('budgetChips').children].forEach(c => c.classList.toggle('on', Number(c.dataset.v) === state.budget));
+  syncSub();
+}
+function syncSub(){
+  const tags = new Set();
+  state.prefs.forEach(s => s.forEach(x => tags.add(PREFS.find(p => p[0] === x)?.[1] || x)));
+  $('goSub').textContent = `${state.hc} 人 · ${money(state.budget)} · ` + (tags.size ? [...tags].join('、') : '暂无忌口');
+}
+function renderPeople(){
+  $('people').innerHTML = state.prefs.map((set, i) => `
+    <div class="person" data-i="${i}">
+      <div class="pname">${String(i + 1).padStart(2,'0')} <em>${i === 0 ? '发起人' : '第' + (i + 1) + '位'}</em></div>
+      <div class="tags">
+        ${PREFS.map(([k, label]) => `<div class="tag ${set.has(k) ? 'on' : ''}" data-p="${k}">${label}</div>`).join('')}
+      </div>
+    </div>`).join('');
+  $('people').querySelectorAll('.person').forEach(row => {
+    const i = Number(row.dataset.i);
+    row.querySelectorAll('.tag').forEach(tag => {
+      tag.onclick = () => {
+        const k = tag.dataset.p;
+        if (state.prefs[i].has(k)) state.prefs[i].delete(k); else state.prefs[i].add(k);
+        tag.classList.toggle('on'); syncSub();
+      };
+    });
+  });
+}
+
+$('minus').onclick = () => setHc(state.hc - 1);
+$('plus').onclick = () => setHc(state.hc + 1);
+$('budgetChips').onclick = e => { const c = e.target.closest('.chip'); if (c) setBudget(c.dataset.v); };
+$('budgetInput').oninput = e => setBudget(e.target.value);
+
+/* ---------- 门店 ---------- */
+async function loadStore(city){
+  try {
+    if (!(await isLive())) throw new Error('static');
+    const j = await api('/api/store?city=' + encodeURIComponent(city || state.city || '广州'));
+    state.store = j.storeCode; state.city = city || state.city;
+    $('storeName').innerHTML = j.storeName.replace('麦当劳','') + '<span class="meta">门店号 ' + j.storeCode + '</span>';
+    return;
+  } catch (e) {
+    try {
+      const s = await snapshot();
+      state.store = s.store.storeCode; state.city = s.city;
+      $('storeName').innerHTML = s.store.storeName.replace('麦当劳','') + '<span class="meta">门店号 ' + s.store.storeCode + '</span>';
+    } catch { $('storeName').textContent = '门店加载失败：' + e.message; }
+  }
+}
+$('changeStore').onclick = async () => {
+  $('storeModal').classList.add('on');
+  $('cityInput').value = state.city || '广州';
+  await searchStores();
+};
+$('closeStore').onclick = () => $('storeModal').classList.remove('on');
+$('searchStore').onclick = () => searchStores();
+async function searchStores(){
+  const kw = $('cityInput').value.trim() || '广州';
+  $('storeList').innerHTML = '<div class="sitem"><div class="n">搜索中…</div></div>';
+  try {
+    if (!(await isLive())) throw new Error('static');
+    const j = await api('/api/stores?city=' + encodeURIComponent(kw) + '&keyword=' + encodeURIComponent(kw));
+    if (!j.stores.length) { $('storeList').innerHTML = '<div class="sitem"><div class="n">没搜到，换个词试试</div></div>'; return; }
+    $('storeList').innerHTML = j.stores.map(s => `
+      <div class="sitem ${s.storeCode === state.store ? 'on' : ''}" data-c="${s.storeCode}">
+        <div class="n">${s.storeName}</div>
+        ${s.address ? `<div class="a">${s.address}</div>` : ''}
+        <div class="c">${s.storeCode}</div>
+      </div>`).join('');
+    bindStoreList();
+  } catch (e) {
+    try {
+      const s = await snapshot();
+      const hit = s.stores.filter(x => !kw || x.storeName.includes(kw) || x.address.includes(kw) || s.city.includes(kw));
+      const list = hit.length ? hit : s.stores;
+      $('storeList').innerHTML = list.map(x => `
+        <div class="sitem ${x.storeCode === state.store ? 'on' : ''}" data-c="${x.storeCode}">
+          <div class="n">${x.storeName}</div>
+          ${x.address ? `<div class="a">${x.address}</div>` : ''}
+          <div class="c">${x.storeCode}</div>
+        </div>`).join('');
+      bindStoreList();
+    } catch { $('storeList').innerHTML = '<div class="sitem"><div class="n">搜索失败：' + e.message + '</div></div>'; }
+  }
+}
+function bindStoreList(){
+  $('storeList').querySelectorAll('.sitem').forEach(el => {
+    el.onclick = async () => {
+      state.store = el.dataset.c;
+      $('storeModal').classList.remove('on');
+      $('storeName').innerHTML = el.querySelector('.n').textContent.replace('麦当劳','') +
+        '<span class="meta">门店号 ' + el.dataset.c + '</span>';
+    };
+  });
+}
+
+/* ---------- 生成方案 ---------- */
+$('go').onclick = async () => {
+  $('loading').classList.add('on');
+  $('loadSub').textContent = 'query-meals → calculate-price';
+  try {
+    const prefs = state.prefs.map(s => [...s]);
+    plan = await getPlan({ headcount: state.hc, budget: state.budget, prefs, storeCode: state.store });
+    curMode = plan.heroMode;
+    renderResult();
+    $('result').classList.add('on');
+    if (plan.live) startPoll(plan.id);
+  } catch (e) {
+    toast('搭配失败：' + e.message);
+  } finally {
+    $('loading').classList.remove('on');
+  }
+};
+
+function startPoll(id){
+  clearInterval(pollTimer);
+  let n = 0;
+  pollTimer = setInterval(async () => {
+    n++; if (n > 25) return clearInterval(pollTimer);
+    try {
+      const j = await api('/api/plan/' + id);
+      if (j.plan.summarySource === 'ai' && j.plan.summary) {
+        const el = document.querySelector('.ai .txt');
+        if (el) el.textContent = j.plan.summary;
+        document.querySelector('.ai')?.classList.remove('loading');
+        clearInterval(pollTimer);
+      }
+    } catch { clearInterval(pollTimer); }
+  }, 1600);
+}
+
+const KIND = [
+  ['share','共享大份','SHARE'],
+  ['main','每人主食','MAIN'],
+  ['side','桌上小食','SIDE'],
+  ['drink','喝的','DRINK'],
+  ['dessert','收尾甜点','DESSERT'],
+];
+
+function planCard(p, isHero){
+  const secs = KIND.map(([k, name, en]) => {
+    const items = p.items.filter(i => i.kind === k);
+    if (!items.length) return '';
+    return `<div class="sec"><span class="k">${en}</span><span class="n">${name}</span></div>` +
+      items.map(it => `
+        <div class="item">
+          <div class="row">
+            <div class="nm"><span class="q">${it.qty}×</span>${it.name}${
+              it.kcal != null ? `<span class="kc">${it.kcal}kcal</span>` : ''}</div>
+            <div class="pr">${(it.price * it.qty).toFixed(1)}</div>
+          </div>
+          <div class="why">${it.why}</div>
+        </div>`).join('');
+  }).filter(Boolean).join('<div class="dash thin"></div>');
+
+  const px = p.price || {};
+  const saved = (px.original && px.payable && px.original > px.payable)
+    ? `<div class="trow"><span>官方算价已省</span><span class="mint">-${money(px.original - px.payable)}</span></div>` : '';
+  const kcalLine = p.totalKcal != null
+    ? `<div class="trow"><span>总热量${p.kcalFull ? '' : `（${p.kcalKnown}/${p.kcalTotal} 项有数据）`}</span><span class="mint">${p.totalKcal} kcal</span></div>`
+    : '';
+
+  return `
+    <div class="receipt">
+      <div class="rhead">
+        <h2>${plan.storeName}</h2>
+        <p>${plan.headcount} 人 · 预算 ${money(plan.budget)} · 到店自取 · ${p.modeName}</p>
+      </div>
+      <div class="dash"></div>
+      ${secs}
+      <div class="dash"></div>
+      <div class="tot">
+        <div class="trow hl"><span>应付（官方核价）</span><b>${money(p.total)}</b></div>
+        ${px.original && Math.abs(px.original - p.total) > 0.05
+          ? `<div class="trow"><span>原价</span><span class="strike">${money(px.original)}</span></div>` : ''}
+        ${saved}
+        <div class="trow"><span>人均</span><span class="mint">${money(p.perPerson)}</span></div>
+        <div class="trow"><span>预算结余</span><span class="mint">${money(p.leftover)}</span></div>
+        ${kcalLine}
+      </div>
+      <div class="bbar"><i style="width:${Math.min(100, p.usage)}%"></i></div>
+      <div class="blabel"><span>已用 ${p.usage}%</span><span>预算 ${money(plan.budget)}</span></div>
+      <div class="note">
+        <b>下单备注：</b>${p.orderNote}
+        ${p.blockedList.length ? `<br><b>全桌避开：</b>${p.blockedList.join('、')}` : ''}
+        ${p.notes.length ? `<br>${p.notes.join('；')}` : ''}
+      </div>
+      <div class="stamp2">价格由麦当劳 MCP calculate-price 实时核出 · ${p.pricedBy === 'mcd-calculate-price' ? '官方价' : '本地估算'}</div>
+      ${isHero ? `<div class="ai loading"><span class="lbl">AI 参谋</span><span class="txt">${plan.summary || '正在生成点评…'}</span></div>` : ''}
+    </div>`;
+}
+
+function renderResult(){
+  extraLoaded = false;               // 卡片区已重建，附加信息需要重新挂
+  const hero = plan.plans.find(p => p.mode === curMode) || plan.plans[0];
+  curMode = hero.mode;
+
+  const tabs = plan.plans.map(p => `
+    <div class="tab ${p.mode === hero.mode ? 'on' : ''}" data-m="${p.mode}">
+      <span class="t">${p.modeName}</span>
+      <span class="s">${money(p.total)} · 人均${money(p.perPerson)}</span>
+    </div>`).join('');
+
+  $('rwrap').innerHTML = `
+    <div class="tabs">${tabs}</div>
+    <div id="cardBox">${planCard(hero, true)}</div>
+    <div class="acts">
+      <button class="again" onclick="closeResult()">重新搭配</button>
+      <button class="copy" onclick="copyOrder()">复制清单</button>
+    </div>
+    <div class="acts">
+      <button class="order" onclick="askOrder()">让 MCP 真下单</button>
+    </div>
+    <div class="extra" id="extraBox"></div>`;
+
+  $('rwrap').querySelectorAll('.tab').forEach(t => {
+    t.onclick = () => { curMode = t.dataset.m; renderResult(); };
+  });
+  // 切回主推方案且 AI 点评还没回来时，继续轮询
+  if (plan.live && hero.mode === plan.heroMode && plan.summarySource !== 'ai') startPoll(plan.id);
+  loadExtra();
+}
+
+async function getCampaigns(){
+  if (await isLive()) { try { return (await api('/api/campaigns')).campaigns || []; } catch { LIVE = false; } }
+  return ((await snapshot()).campaigns) || [];
+}
+async function getCoupons(){
+  if (await isLive()) { try { return (await api('/api/coupons')).coupons || []; } catch { LIVE = false; } }
+  return ((await snapshot()).coupons) || [];
+}
+let extraLoaded = false;
+async function loadExtra(){
+  if (extraLoaded) return;
+  extraLoaded = true;
+  const box = $('extraBox');
+  if (!box) return;
+  try {
+    const list = await getCampaigns();
+    if (list.length) {
+      box.insertAdjacentHTML('beforeend', `
+        <div class="card">
+          <h4><span class="b">MCP</span>今天店里有什么新鲜事</h4>
+          <ul>${list.slice(0, 5).map(x => `<li><b>${x}</b></li>`).join('')}</ul>
+        </div>`);
+    }
+  } catch {}
+  try {
+    const coupons = await getCoupons();
+    if (coupons.length) {
+      const canGet = coupons.filter(x => x.status === 'CAN_GET');
+      box.insertAdjacentHTML('beforeend', `
+        <div class="card">
+          <h4><span class="b g">麦麦省</span>卡包里的券（${coupons.length} 张）</h4>
+          <div class="cpimg">${coupons.slice(0, 8).map(x =>
+            `<img src="${x.image}" alt="${x.name}" title="${x.name} · ${x.label}">`).join('')}</div>
+          <ul>${coupons.slice(0, 4).map(x => `<li><b>${x.name}</b> · ${x.label}</li>`).join('')}</ul>
+          ${canGet.length && plan && plan.live ? `<button class="btn2" id="claimBtn">一键领取 ${canGet.length} 张可领券</button>` : ''}
+        </div>`);
+      const cb = $('claimBtn');
+      if (cb) cb.onclick = async () => {
+        cb.disabled = true; cb.textContent = '领取中…';
+        try { const r = await api('/api/coupons/claim', { method: 'POST' }); toast(r.ok ? '已提交领取' : '领取未完成'); }
+        catch (e) { toast('领取失败：' + e.message); }
+      };
+    }
+  } catch {}
+}
+
+function closeResult(){
+  $('result').classList.remove('on');
+  clearInterval(pollTimer);
+}
+
+function curPlan(){ return plan.plans.find(p => p.mode === curMode) || plan.plans[0]; }
+
+function copyOrder(){
+  const p = curPlan(); if (!p) return;
+  const lines = ['【开饭参谋】' + plan.headcount + ' 人 · 预算 ' + money(plan.budget),
+    plan.storeName, '方案：' + p.modeName];
+  p.items.forEach(i => lines.push(`${i.qty}× ${i.name}  ${money(i.price * i.qty)}`));
+  lines.push('应付 ' + money(p.total) + '，人均 ' + money(p.perPerson));
+  if (p.totalKcal != null) lines.push('总热量约 ' + p.totalKcal + ' kcal');
+  lines.push('备注：' + p.orderNote);
+  const text = lines.join('\n');
+  if (navigator.clipboard) navigator.clipboard.writeText(text)
+    .then(() => toast('下单清单已复制'), () => fallbackCopy(text));
+  else fallbackCopy(text);
+}
+function fallbackCopy(text){
+  const ta = document.createElement('textarea');
+  ta.value = text; document.body.appendChild(ta); ta.select();
+  try { document.execCommand('copy'); toast('下单清单已复制'); } catch { toast('复制失败，请手动选择'); }
+  ta.remove();
+}
+
+let orderPayload = null;
+function askOrder(){
+  const p = curPlan(); if (!p) return;
+  if (plan && plan.live === false) {
+    toast('在线演示版不下单；本地运行源码可直连 MCP 下单');
+    return;
+  }
+  orderPayload = { confirm: true, storeCode: plan.storeCode,
+    items: p.items.map(i => ({ code: i.code, qty: i.qty })), remark: p.orderNote };
+  $('confirmText').innerHTML =
+    `将用麦当劳 MCP 创建<b>真实订单</b>：${plan.storeName}<br><br>` +
+    p.items.map(i => `${i.qty}× ${i.name}`).join('，') +
+    `<br><br>应付 <b>${money(p.total)}</b>，到店自取。`;
+  $('confirmBox').classList.add('on');
+}
+$('confirmNo').onclick = () => $('confirmBox').classList.remove('on');
+$('confirmYes').onclick = async () => {
+  $('confirmBox').classList.remove('on');
+  $('loading').classList.add('on');
+  $('loadSub').textContent = 'create-order';
+  try {
+    const r = await api('/api/order', {
+      method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(orderPayload)
+    });
+    toast(r.ok ? '订单已创建，请到店取餐' : ('下单未成功：' + (r.data?.message || '请查看返回')));
+  } catch (e) { toast('下单失败：' + e.message); }
+  finally { $('loading').classList.remove('on'); }
+};
+
+/* ---------- 启动 ---------- */
+(async () => {
+  renderPeople(); syncSub();
+  await loadStore('广州');
+})();
+</script>
+</body>
+</html>
