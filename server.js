@@ -20,6 +20,7 @@ const path = require('path');
 const {
   mcp, findStores, resolveStore, getMenu, getNutrition, nutritionFor,
   priceCheck, getAvailableCoupons, claimAllCoupons, getCampaigns,
+  wayOf, getAddresses, resolveDelivery,
 } = require('./lib/mcd');
 const { planAll, PREF_LABEL } = require('./lib/planner');
 
@@ -84,7 +85,7 @@ function localSummary(p) {
 
 // 生成候选 → 交给麦当劳官方算价 → 逐项核对小计；对不上的餐品直接拉黑重搭
 // （例如"双人分享餐八件套"这类需要选子项的组合，官方算价会按默认高价计，必须剔除）
-async function planWithValidation({ headcount, budget, prefs, catalog, table, storeCode, maxRounds = 3 }) {
+async function planWithValidation({ headcount, budget, prefs, catalog, table, storeCode, maxRounds = 3, opts = {} }) {
   const banned = new Set();
   let last = [];
   for (let round = 0; round < maxRounds; round++) {
@@ -93,7 +94,7 @@ async function planWithValidation({ headcount, budget, prefs, catalog, table, st
 
     const priced = await Promise.all(drafts.map(async (d) => {
       try {
-        return { d, px: await priceCheck(storeCode, d.items), err: null };
+        return { d, px: await priceCheck(storeCode, d.items, opts), err: null };
       } catch (e) {
         return { d, px: null, err: e.message };
       }
@@ -130,11 +131,11 @@ async function planWithValidation({ headcount, budget, prefs, catalog, table, st
 }
 
 // 补齐热量：营养表没有的组合餐，拉官方餐品详情把子项拆开累加
-async function enrichKcal(plans, storeCode, table, headcount) {
+async function enrichKcal(plans, storeCode, table, headcount, opts = {}) {
   await Promise.all(plans.map(async (pl) => {
     await Promise.all(pl.items.map(async (it) => {
       if (it.kcal != null) return;
-      const n = await nutritionFor({ name: it.name, code: it.code }, storeCode, table);
+      const n = await nutritionFor({ name: it.name, code: it.code }, storeCode, table, opts);
       if (n) { it.kcal = n.kcal; it.kcalSource = n.source; }
     }));
     const known = pl.items.filter((i) => i.kcal != null);
@@ -196,11 +197,22 @@ const server = http.createServer(async (req, res) => {
       const prefs = (Array.isArray(b.prefs) ? b.prefs : []).slice(0, headcount);
       const city = b.city || DEFAULT_CITY;
 
-      const store = await resolveStore(city, b.storeCode || DEFAULT_STORE, b.keyword);
-      const [catalog, table] = await Promise.all([getMenu(store.storeCode), getNutrition()]);
+      // 取餐方式：到店自取（orderType=1/beType=1）或麦乐送外送（orderType=2/beType=2，需要地址换 beCode）
+      const way = b.way === 'delivery' ? 'delivery' : 'pickup';
+      const cfg = wayOf(way);
+      let store, deliverTo = null;
+      if (way === 'delivery') {
+        const d = await resolveDelivery(b.addressId, b.storeCode || DEFAULT_STORE);
+        store = { storeCode: d.storeCode, storeName: d.storeName, address: d.address, beCode: d.beCode };
+        deliverTo = { addressId: d.addressId, label: d.addressLabel };
+      } else {
+        store = await resolveStore(city, b.storeCode || DEFAULT_STORE, b.keyword);
+      }
+      const opts = { way, beCode: store.beCode || '', needTableware: b.needTableware !== false };
+      const [catalog, table] = await Promise.all([getMenu(store.storeCode, opts), getNutrition()]);
 
       const { plans: validated, banned, rounds } = await planWithValidation({
-        headcount, budget, prefs, catalog, table, storeCode: store.storeCode,
+        headcount, budget, prefs, catalog, table, storeCode: store.storeCode, opts,
       });
       if (!validated.length) throw new Error('这个预算和忌口组合下，没能搭出可行方案');
 
@@ -222,7 +234,7 @@ const server = http.createServer(async (req, res) => {
         };
       });
 
-      await enrichKcal(checked, store.storeCode, table, headcount);
+      await enrichKcal(checked, store.storeCode, table, headcount, opts);
 
       // 主推：默认均衡；若超预算则取最便宜的一套
       const inBudget = checked.filter((c) => c.total <= budget);
@@ -231,10 +243,14 @@ const server = http.createServer(async (req, res) => {
 
       const payload = {
         id: Math.random().toString(36).slice(2, 8).toUpperCase(),
-        storeCode: store.storeCode, storeName: store.storeName,
+        storeCode: store.storeCode, storeName: store.storeName, address: store.address || '',
+        way, wayLabel: cfg.label, deliverTo, beCode: store.beCode || '',
+        needTableware: opts.needTableware,
         headcount, budget, prefs,
         plans: checked, heroMode: hero.mode,
-        mcpCalls: ['query-nearby-stores', 'query-meals', 'list-nutrition-foods', 'calculate-price'],
+        mcpCalls: way === 'delivery'
+          ? ['delivery-query-addresses', 'delivery-query-stores', 'query-meals', 'list-nutrition-foods', 'calculate-price']
+          : ['query-nearby-stores', 'query-meals', 'list-nutrition-foods', 'calculate-price'],
         nutritionSize: table.size,
         priceRounds: rounds,
         excludedByPriceCheck: [...banned].length,
@@ -253,6 +269,16 @@ const server = http.createServer(async (req, res) => {
       const hit = plans.get(mPlan[1]);
       if (!hit) return send(res, 404, { ok: false, error: '方案已过期，请重新搭配' });
       return send(res, 200, { ok: true, plan: hit.plan });
+    }
+
+    // 配送地址（外送场景用）
+    if (p === '/api/addresses') {
+      try {
+        const list = await getAddresses();
+        return send(res, 200, { ok: true, addresses: list });
+      } catch (e) {
+        return send(res, 200, { ok: true, addresses: [], note: e.message });
+      }
     }
 
     // 优惠券
@@ -281,11 +307,20 @@ const server = http.createServer(async (req, res) => {
       const storeCode = b.storeCode;
       const items = (b.items || []).map((i) => ({ productCode: i.code, quantity: i.qty }));
       if (!storeCode || !items.length) return send(res, 400, { ok: false, error: '缺少门店或商品' });
-      const r = await mcp.callRaw('create-order', {
-        storeCode, orderType: 1, beType: 1, items,
-        takeWayCode: b.takeWayCode || 'take-in-store',
-        remark: b.remark || '',
-      });
+
+      const way = b.way === 'delivery' ? 'delivery' : 'pickup';
+      const cfg = wayOf(way);
+      const args = { storeCode, orderType: cfg.orderType, beType: cfg.beType, items, remark: b.remark || '' };
+      if (way === 'delivery') {
+        // 外送必传 addressId（来自 /api/addresses）与 beCode（来自 delivery-query-stores）
+        if (!b.addressId) return send(res, 400, { ok: false, error: '外送需要 addressId，先用 /api/addresses 取' });
+        args.addressId = b.addressId;
+        if (b.beCode) args.beCode = b.beCode;
+        args.needTableware = b.needTableware !== false;
+      } else {
+        args.takeWayCode = b.takeWayCode || 'take-in-store';
+      }
+      const r = await mcp.callRaw('create-order', args);
       return send(res, 200, { ok: !r.isError, data: r.data?.data, text: r.text.slice(0, 600) });
     }
 

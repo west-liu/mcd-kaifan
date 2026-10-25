@@ -22,6 +22,8 @@
 | `available-coupons` | 卡包优惠券 | 结果页展示麦麦省券面，告诉用户手上有什么 |
 | `auto-bind-coupons` | 一键领券 | 一键领取当前所有可领券 |
 | `campaign-calendar` | 营销活动日历 | 结果页展示"今天店里有什么新鲜事" |
+| `delivery-query-addresses` | 查配送地址 | 外送场景入口：拿到 `addressId` |
+| `delivery-query-stores` | 查可配送门店 | `beType=2` + `addressId` → 外送门店与 **`beCode`**（外送必传） |
 
 ---
 
@@ -54,6 +56,39 @@
   │
   └─⑨ 用户点「让 MCP 真下单」→ create-order（二次确认）
 ```
+
+---
+
+## 取餐方式：到店自取 / 麦乐送外送
+
+页面上可以随时切换取餐方式，切换后**菜单、核价、下单三处参数一起变**，不是只改个文案。
+
+| 方式 | `orderType` | `beType` | 额外必传 | 说明 |
+| --- | --- | --- | --- | --- |
+| 到店自取 | 1 | 1 | — | `create-order` 传 `takeWayCode=take-in-store`，**不要**传 `addressId` |
+| 麦乐送外送 | 2 | 2 | `addressId` + `beCode` | `beCode` 来自 `delivery-query-stores`；`query-meals` / `calculate-price` / `create-order` 都要带 |
+| 得来速 DT | 1 | 5 | `beCode` | 参数已支持，UI 暂未开放（多数城市门店不支持） |
+
+外送完整链路：
+
+```
+delivery-query-addresses ──→ addressId
+        │
+delivery-query-stores(beType=2, addressId) ──→ 外送门店 storeCode + beCode
+        │
+query-meals(orderType=2, beType=2, beCode) ──→ 外送菜单（价格与自取不同）
+        │
+calculate-price(orderType=2, beType=2, beCode, needTableware) ──→ 含配送费/餐袋费的应付价
+        │
+create-order(orderType=2, beType=2, addressId, beCode, needTableware, remark)
+```
+
+几个踩过的坑：
+
+- **外送不传 `beCode` 直接报错**，而 `beCode` 必须先有地址才能查到，所以链路顺序不能改。
+- `remark` 在官方说明里是"仅 orderType=2 场景引导用户填写"，所以「需要餐具」「无接触配送」只在切到外送时追加进备注。
+- 账户里没有配送地址时，接口返回空数组。项目**不会静默退回到店自取**，而是明确提示"先加一个配送地址"——不然用户会以为下的是外送。
+- 在线演示版是静态页（麦当劳 MCP 不开 CORS，浏览器无法直连），切外送时沿用自取菜单价搭配，页面上会明确标注差价与配送费另计；真实外送菜单需要跑本地版。
 
 ---
 

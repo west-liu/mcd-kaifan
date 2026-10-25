@@ -282,6 +282,24 @@ header{padding:26px 0 18px;}
   font-size:14px;font-weight:800;cursor:pointer;letter-spacing:.5px;}
 .code{background:#0E0B08;border:1px solid var(--line);border-radius:9px;padding:11px 12px;margin-top:10px;
   font:11.5px/1.75 ui-monospace,Menlo,monospace;color:#9FE3C2;overflow-x:auto;white-space:pre;}
+
+/* ---------- 取餐方式 ---------- */
+.waybar{display:flex;gap:8px;margin-bottom:13px;}
+.way{flex:1;text-align:center;padding:11px 6px;border-radius:13px;border:1px solid var(--line);
+  background:rgba(255,255,255,.04);color:#CFC4AE;cursor:pointer;transition:.15s;user-select:none;}
+.way .w{font-size:13.5px;font-weight:700;display:block;}
+.way .s{font-size:10px;color:var(--dim);font-family:ui-monospace,Menlo,monospace;margin-top:3px;display:block;}
+.way.on{background:var(--gold);border-color:var(--gold);}
+.way.on .w{color:#2A1C05;}
+.way.on .s{color:#6B5406;}
+.dopts{display:none;flex-wrap:wrap;gap:7px;margin:-4px 0 13px;}
+.dopts.on{display:flex;}
+.dopt{font-size:12px;padding:7px 11px;border-radius:9px;border:1px solid var(--line);
+  background:rgba(255,255,255,.04);color:#B7AC98;cursor:pointer;user-select:none;}
+.dopt.on{background:rgba(25,181,122,.15);border-color:var(--mint);color:var(--mint);font-weight:600;}
+.wnote{margin-top:9px;background:#EAF3EE;border-left:3px solid var(--mint);border-radius:6px;
+  padding:10px 12px;font-size:12px;line-height:1.6;color:#3F5A4C;}
+.wnote b{color:#1B1712;}
 </style>
 </head>
 <body>
@@ -298,8 +316,17 @@ header{padding:26px 0 18px;}
     <div class="chg" id="changeStore">换店 ›</div>
   </div>
 
+  <div class="waybar" id="wayBar">
+    <div class="way on" data-w="pickup"><span class="w">到店自取</span><span class="s">orderType=1 · beType=1</span></div>
+    <div class="way" data-w="delivery"><span class="w">麦乐送外送</span><span class="s">orderType=2 · beType=2</span></div>
+  </div>
+  <div class="dopts" id="deliveryOpts">
+    <div class="dopt on" data-d="tableware">需要餐具</div>
+    <div class="dopt" data-d="nocontact">无接触配送</div>
+  </div>
+
   <section class="panel">
-    <div class="ptitle"><span class="idx">01</span>几个人吃<small>到店自取</small></div>
+    <div class="ptitle"><span class="idx">01</span>几个人吃<small id="hcHint">到店自取</small></div>
     <div class="stepper">
       <div class="sbtn" id="minus">−</div>
       <div class="hnum"><b id="hc">3</b><span>人</span></div>
@@ -383,9 +410,13 @@ header{padding:26px 0 18px;}
     <div class="code">POST https://mcp.mcd.cn
 Authorization: Bearer ••••
 
+到店自取  : orderType=1, beType=1, takeWayCode=take-in-store
+麦乐送外送: orderType=2, beType=2, addressId + beCode
+   ↳ delivery-query-addresses → delivery-query-stores(beType=2)
+
 1. query-meal-detail  → 拿默认子项（套餐拆解）
 2. calculate-price    → 官方核价，覆盖本地估算
-3. create-order       → 生成真实订单（到店取餐）
+3. create-order       → 生成真实订单（自取/外送都走它）
    ↩ { code:200, data:{ orderId:"...", payAmount:"...", pickupCode:"..." } }</div>
     <div class="dwhy">
       本地跑法：<br>
@@ -412,7 +443,8 @@ const PREFS = [
   ['diet','减脂'],['nosaucce','不要酱'],['nobeef','不吃牛肉'],
   ['nospicy','不吃辣'],['nofried','不吃炸物'],['noice','去冰'],['veggie','素食']
 ];
-const state = { hc: 3, budget: 90, prefs: [new Set(), new Set(), new Set()], store: '', city: '' };
+const state = { hc: 3, budget: 90, prefs: [new Set(), new Set(), new Set()], store: '', city: '',
+  way: 'pickup', dOpts: new Set(['tableware']) };
 let plan = null, curMode = null, pollTimer = null;
 
 function toast(m){
@@ -509,7 +541,8 @@ function setBudget(v){
 function syncSub(){
   const tags = new Set();
   state.prefs.forEach(s => s.forEach(x => tags.add(PREFS.find(p => p[0] === x)?.[1] || x)));
-  $('goSub').textContent = `${state.hc} 人 · ${money(state.budget)} · ` + (tags.size ? [...tags].join('、') : '暂无忌口');
+  $('goSub').textContent = `${state.hc} 人 · ${money(state.budget)} · ${state.way === 'delivery' ? '外送' : '自取'} · `
+    + (tags.size ? [...tags].join('、') : '暂无忌口');
 }
 function renderPeople(){
   $('people').innerHTML = state.prefs.map((set, i) => `
@@ -535,6 +568,41 @@ $('minus').onclick = () => setHc(state.hc - 1);
 $('plus').onclick = () => setHc(state.hc + 1);
 $('budgetChips').onclick = e => { const c = e.target.closest('.chip'); if (c) setBudget(c.dataset.v); };
 $('budgetInput').oninput = e => setBudget(e.target.value);
+
+/* ---------- 取餐方式：到店自取 / 麦乐送外送 ---------- */
+function setWay(w){
+  state.way = w === 'delivery' ? 'delivery' : 'pickup';
+  [...$('wayBar').children].forEach(el => el.classList.toggle('on', el.dataset.w === state.way));
+  $('deliveryOpts').classList.toggle('on', state.way === 'delivery');
+  if ($('hcHint')) $('hcHint').textContent = state.way === 'delivery' ? '送到家' : '到店自取';
+  syncSub();
+}
+$('wayBar').onclick = e => {
+  const el = e.target.closest('.way'); if (!el) return;
+  if (el.dataset.w === state.way) return;
+  setWay(el.dataset.w);
+  if (state.way === 'delivery') {
+    toast('外送：在线版沿用自取菜单价搭配，实际每份与配送费以门店为准');
+  }
+};
+$('deliveryOpts').onclick = e => {
+  const el = e.target.closest('.dopt'); if (!el) return;
+  const k = el.dataset.d;
+  if (state.dOpts.has(k)) state.dOpts.delete(k); else state.dOpts.add(k);
+  el.classList.toggle('on');
+};
+// 外送专属备注写进下单备注
+function applyWay(p){
+  if (state.way !== 'delivery') return p;
+  const extra = [];
+  if (state.dOpts.has('tableware')) extra.push('需要餐具');
+  if (state.dOpts.has('nocontact')) extra.push('无接触配送');
+  if (extra.length) {
+    const base = (p.orderNote && p.orderNote !== '无特殊备注') ? p.orderNote + '；' : '';
+    p.orderNote = base + extra.join('；');
+  }
+  return p;
+}
 
 /* ---------- 门店 ---------- */
 async function loadStore(city){
@@ -605,7 +673,12 @@ $('go').onclick = async () => {
   $('loadSub').textContent = 'query-meals → calculate-price';
   try {
     const prefs = state.prefs.map(s => [...s]);
-    plan = await getPlan({ headcount: state.hc, budget: state.budget, prefs, storeCode: state.store });
+    plan = await getPlan({
+      headcount: state.hc, budget: state.budget, prefs, storeCode: state.store,
+      way: state.way, needTableware: state.dOpts.has('tableware'),
+    });
+    plan.way = state.way;
+    plan.plans.forEach(applyWay);
     curMode = plan.heroMode;
     renderResult();
     $('result').classList.add('on');
@@ -671,7 +744,8 @@ function planCard(p, isHero){
     <div class="receipt">
       <div class="rhead">
         <h2>${plan.storeName}</h2>
-        <p>${plan.headcount} 人 · 预算 ${money(plan.budget)} · 到店自取 · ${p.modeName}</p>
+        <p>${plan.headcount} 人 · 预算 ${money(plan.budget)} · ${
+          plan.way === 'delivery' ? '麦乐送外送' : '到店自取'} · ${p.modeName}</p>
       </div>
       <div class="dash"></div>
       ${secs}
@@ -679,7 +753,7 @@ function planCard(p, isHero){
       <div class="tot">
         <div class="trow hl"><span>应付${p.edited
           ? '（手改后重算）<span class="tag-edited">手改</span>'
-          : '（官方核价）'}</span><b>${money(p.total)}</b></div>
+          : (official ? '（官方核价）' : '（菜单价核算）')}</span><b>${money(p.total)}</b></div>
         ${px.original && Math.abs(px.original - p.total) > 0.05
           ? `<div class="trow"><span>${official ? '原价' : '菜单标价'}</span><span class="strike">${money(px.original)}</span></div>` : ''}
         ${saved}
@@ -695,6 +769,12 @@ function planCard(p, isHero){
         ${p.notes.length ? `<br>${p.notes.join('；')}` : ''}
         <span class="pen">改</span>
       </div>
+      ${plan.way === 'delivery' ? `
+      <div class="wnote">
+        <b>外送说明：</b>餐品按到店自取菜单价搭配（外送每份通常略高，另有配送费与餐袋费）。
+        本地完整版会按你的配送地址走 <b>delivery-query-stores → query-meals(orderType=2)</b> 拉真实外送菜单，
+        再用 <b>calculate-price(orderType=2)</b> 核价。
+      </div>` : ''}
       <div class="stamp2">${p.edited
         ? '已手动改单 · 按菜单价本地重算，官方核价需在本地版重跑'
         : (p.pricedBy === 'mcd-calculate-price'
@@ -975,18 +1055,33 @@ function fallbackCopy(text){
 }
 
 let orderPayload = null;
-function askOrder(){
+async function askOrder(){
   const p = curPlan(); if (!p) return;
   if (plan && plan.live === false) {
     $('mcpModal').classList.add('on');
     return;
   }
-  orderPayload = { confirm: true, storeCode: plan.storeCode,
-    items: p.items.map(i => ({ code: i.code, qty: i.qty })), remark: p.orderNote };
+  const delivery = plan.way === 'delivery';
+  let aid = null;
+  if (delivery) {
+    try {
+      const j = await api('/api/addresses');
+      aid = (j.addresses || [])[0] ? j.addresses[0].addressId : null;
+    } catch { aid = null; }
+    if (!aid) return toast('账户里没有配送地址，先在麦当劳 App 加一个再点');
+  }
+  orderPayload = {
+    confirm: true, storeCode: plan.storeCode,
+    items: p.items.map(i => ({ code: i.code, qty: i.qty })),
+    remark: p.orderNote,
+    way: plan.way,
+    needTableware: state.dOpts.has('tableware'),
+  };
+  if (delivery) { orderPayload.addressId = aid; if (plan.beCode) orderPayload.beCode = plan.beCode; }
   $('confirmText').innerHTML =
     `将用麦当劳 MCP 创建<b>真实订单</b>：${plan.storeName}<br><br>` +
     p.items.map(i => `${i.qty}× ${i.name}`).join('，') +
-    `<br><br>应付 <b>${money(p.total)}</b>，到店自取。`;
+    `<br><br>应付 <b>${money(p.total)}</b>，${delivery ? '麦乐送外送（orderType=2 / beType=2）' : '到店自取（orderType=1 / beType=1）'}。`;
   $('confirmBox').classList.add('on');
 }
 $('confirmNo').onclick = () => $('confirmBox').classList.remove('on');
