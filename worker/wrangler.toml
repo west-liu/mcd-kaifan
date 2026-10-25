@@ -1,0 +1,13 @@
+name = "kaifan-mcp-proxy"
+main = "bundle.js"
+compatibility_date = "2025-06-18"
+
+# 不上传任何 Secret 到仓库。部署后执行：
+#   npx wrangler secret put MCD_TOKEN
+[vars]
+DEFAULT_CITY = "广州"
+DEFAULT_STORE = "1400359"
+DEFAULT_STORE_NAME = "麦当劳广州天源路餐厅"
+# 公网部署强烈建议保持 0：create-order 会产生真实麦当劳订单
+ENABLE_ORDER = "0"
+ALLOW_ORIGIN = "*"

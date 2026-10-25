@@ -473,13 +473,34 @@ body{-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;}
 <div class="confirm" id="confirmBox">
   <div class="cbox">
     <h4>真的要下单吗？</h4>
-    <p id="confirmText">这会通过麦当劳 MCP 创建一笔<b>真实订单</b>，需要到店取餐并完成支付。请确认金额无误。</p>
+    <p id="confirmText">这会通过麦当劳 MCP 创建一笔<b>真实订单</b>，需要完成支付后凭取餐码取餐。请确认金额无误。</p>
     <div class="row2">
       <button class="no" id="confirmNo">再想想</button>
       <button class="yes" id="confirmYes">确认下单</button>
     </div>
   </div>
 </div>
+
+<div class="pay" id="payBox"></div>
+<style>
+.pay{position:fixed;inset:0;z-index:120;display:none;align-items:center;justify-content:center;
+  background:rgba(15,18,25,.62);backdrop-filter:blur(6px);padding:20px}
+.pay.on{display:flex}
+.pay>*{background:#fff;border-radius:20px;padding:26px 24px;width:320px;max-width:100%;
+  box-shadow:0 24px 60px rgba(0,0,0,.28);text-align:center}
+.pay .pt{font-size:17px;font-weight:800;margin-bottom:14px}
+.pay .qr{min-height:168px;display:flex;align-items:center;justify-content:center;margin-bottom:10px}
+.pay .qr img,.pay .qr canvas{border-radius:10px}
+.pay .psub{font-size:11px;color:#8b93a5;word-break:break-all;margin-bottom:8px}
+.pay .ptimer{font-size:12px;color:#8b93a5;margin-bottom:14px}
+.pay .ptimer b{color:#e8452c;font-variant-numeric:tabular-nums}
+.pay .pbtn{display:block;background:#ffc72c;color:#2b2118;border-radius:12px;padding:11px;
+  font-weight:800;font-size:14px;text-decoration:none;margin-bottom:10px}
+.pay .pstate{font-size:13px;color:#5b6478;margin-bottom:12px;min-height:19px}
+.pay .pstate b{color:#e8452c;font-size:20px;letter-spacing:2px}
+.pay .pclose{width:100%;border:1px solid #e3e6ee;background:#fff;border-radius:12px;padding:10px;
+  font-size:14px;color:#5b6478;cursor:pointer}
+</style>
 
 <div class="modal" id="dishModal">
   <div class="sheet" id="dishSheet"></div>
@@ -505,9 +526,17 @@ body{-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;}
   <div class="sheet">
     <h3>这一步在本地版会发生什么<span class="x" id="closeMcp">×</span></h3>
     <div class="dwhy" style="margin-top:0">
-      在线版是纯静态页面，浏览器不能直接连麦当劳 MCP（MCP 不开 CORS），所以这里只做演示。
-      用源码跑本地版，点同一个按钮就会真的走下面这条链：
+      浏览器不能直接连麦当劳 MCP（mcp.mcd.cn 不返回 CORS 头，OPTIONS 预检直接 403），
+      所以静态页默认用快照演示。<b>想让它接真 MCP</b>，有三条路：
     </div>
+    <div class="code">① 边缘代理（推荐 · 不用自己买服务器）
+   Cloudflare Worker 转发 mcp.mcd.cn 并补 CORS
+   页面加 ?api=https://xxx.workers.dev 即可
+
+② 自托管后端：node server.js（Docker / pm2 / Nginx）
+
+③ 本机临时外网：ssh -R 80:localhost:5173 nokey@localhost.run
+   （一次性地址，只适合临时演示）</div>
     <div class="code">POST https://mcp.mcd.cn
 Authorization: Bearer ••••
 
@@ -552,12 +581,34 @@ function toast(m){
   const t = $('toast'); t.textContent = m; t.classList.add('on');
   clearTimeout(t._t); t._t = setTimeout(() => t.classList.remove('on'), 2000);
 }
+/* ---------- API 基址 ----------
+   默认同源（本地跑 / 自带后端时后端就在同一域名下）。
+   纯静态托管（如 GitHub Pages）要接真 MCP，在网址后加
+   ?api=https://xxx.workers.dev 指向一个 MCP 边缘代理即可，
+   这个值会记进 localStorage，之后访问不用再带。            */
+const API_BASE = (function(){
+  const norm = u => (u || '').replace(/\/+$/, '');
+  const q = new URLSearchParams(location.search).get('api');
+  if (q) { try { localStorage.setItem('kf_api', norm(q)); } catch(e){} return norm(q); }
+  let s = null; try { s = localStorage.getItem('kf_api'); } catch(e){}
+  return norm(s);
+})();
 async function api(path, opts){
-  const r = await fetch(path, opts);
+  opts = opts || {};
+  const pass = kfPass();
+  if (pass) opts = { ...opts, headers: { ...(opts.headers || {}), 'x-demo-pass': pass } };
+  const r = await fetch(API_BASE + path, opts);
   const j = await r.json().catch(() => ({ ok:false, error:'返回异常' }));
-  if (!j.ok) throw new Error(j.error || '请求失败');
+  if (!j.ok) {
+    const err = new Error(j.error || '请求失败');
+    err.passRequired = !!j.passRequired;
+    throw err;
+  }
   return j;
 }
+/* 演示口令：存在本机，只有下单和查订单才需要 */
+function kfPass(){ try { return localStorage.getItem('kf_pass') || ''; } catch(e){ return ''; } }
+function setKfPass(v){ try { v ? localStorage.setItem('kf_pass', v) : localStorage.removeItem('kf_pass'); } catch(e){} }
 const money = n => '¥' + (Math.round(n * 100) / 100).toFixed(1);
 
 /* ---------- 在线静态版：没有后端时，用真实 MCP 数据快照在浏览器里算 ---------- */
@@ -575,8 +626,13 @@ function withTimeout(p, ms){
 }
 async function isLive(){
   if (LIVE !== null) return LIVE;
+  // 纯静态托管且没配代理：没有后端可问，直接走快照，省掉一次无效请求
+  if (!API_BASE && location.protocol !== 'file:' && !/^(localhost|127\.0\.0\.1|\d+\.\d+\.\d+\.\d+)$/.test(location.hostname)
+      && location.hostname.endsWith('github.io')) {
+    LIVE = false; return LIVE;
+  }
   try {
-    const r = await withTimeout(fetch('/api/health'), 2500);
+    const r = await withTimeout(fetch(API_BASE + '/api/health'), 3000);
     const j = await r.json().catch(() => ({}));
     LIVE = !!(j && j.ok);
   } catch { LIVE = false; }
@@ -783,7 +839,7 @@ $('go').onclick = async () => {
     curMode = plan.heroMode;
     renderResult();
     $('result').classList.add('on');
-    if (plan.live) startPoll(plan.id);
+    if (plan.pollSummary) startPoll(plan.id);
   } catch (e) {
     toast('搭配失败：' + e.message);
   } finally {
@@ -912,7 +968,7 @@ function renderResult(){
     t.onclick = () => { curMode = t.dataset.m; renderResult(); };
   });
   // 切回主推方案且 AI 点评还没回来时，继续轮询
-  if (plan.live && hero.mode === plan.heroMode && plan.summarySource !== 'ai') startPoll(plan.id);
+  if (plan.pollSummary && hero.mode === plan.heroMode && plan.summarySource !== 'ai') startPoll(plan.id);
   loadExtra();
   bindItems();
 }
@@ -1182,22 +1238,109 @@ async function askOrder(){
   $('confirmText').innerHTML =
     `将用麦当劳 MCP 创建<b>真实订单</b>：${plan.storeName}<br><br>` +
     p.items.map(i => `${i.qty}× ${i.name}`).join('，') +
-    `<br><br>应付 <b>${money(p.total)}</b>，${delivery ? '麦乐送外送（orderType=2 / beType=2）' : '到店自取（orderType=1 / beType=1）'}。`;
+    `<br><br>应付 <b>${money(p.total)}</b>，${delivery ? '麦乐送外送（orderType=2 / beType=2）' : '到店自取（orderType=1 / beType=1）'}。` +
+    `<br><br>下单后会弹出<b>麦当劳官方支付二维码</b>，15 分钟内付款才有取餐码；不付会自动取消。`;
   $('confirmBox').classList.add('on');
 }
 $('confirmNo').onclick = () => $('confirmBox').classList.remove('on');
+let ordering = false;   // 防连点：一次下单没回来之前不再发第二次
+// 下单：若服务端配了演示口令，第一次会被 401 拒掉，此时问一次口令、记住后再发
+async function submitOrder(payload){
+  const post = () => api('/api/order', {
+    method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload)
+  });
+  try {
+    return await post();
+  } catch (e) {
+    if (!e.passRequired) throw e;
+    const v = window.prompt('这站开了口令保护，请输入演示口令后继续下单：', '');
+    if (!v || !v.trim()) throw new Error('已取消（没有输入口令）');
+    setKfPass(v.trim());
+    return await post();
+  }
+}
 $('confirmYes').onclick = async () => {
+  if (ordering) return;
+  ordering = true;
   $('confirmBox').classList.remove('on');
   $('loading').classList.add('on');
   $('loadSub').textContent = 'create-order';
   try {
-    const r = await api('/api/order', {
-      method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(orderPayload)
-    });
-    toast(r.ok ? '订单已创建，请到店取餐' : ('下单未成功：' + (r.data?.message || '请查看返回')));
+    const r = await submitOrder(orderPayload);
+    const d = r.data || {};
+    // 支付链接可能挂在响应顶层，也可能在 data 里，两边都取一遍
+    const pay = {
+      orderId: r.orderId || d.orderId || '',
+      payH5Url: r.payH5Url || d.payH5Url || '',
+      expirePayTime: r.expirePayTime || d.expirePayTime || '',
+    };
+    if (!r.ok) {
+      toast('下单未成功：' + (d.message || r.error || '请查看返回'));
+    } else if (pay.payH5Url) {
+      // 支付链接只在下单这一次返回，query-order 查不回来，必须立刻用掉
+      showPay(pay, money(p0().total));
+    } else {
+      toast(`订单 ${pay.orderId} 已创建 · 待支付，去麦当劳 App 完成付款后才有取餐码`);
+    }
   } catch (e) { toast('下单失败：' + e.message); }
-  finally { $('loading').classList.remove('on'); }
+  finally { $('loading').classList.remove('on'); ordering = false; }
 };
+
+/* ---------- 支付：麦当劳官方支付页 + 15 分钟倒计时 + 自动轮询取餐码 ---------- */
+function p0(){ return curPlan(); }
+let payTimer = null, payPoll = null;
+function showPay(d, amount){
+  const box = $('payBox');
+  const expire = Date.parse(d.expirePayTime) || (Date.now() + 15 * 60 * 1000);
+  box.innerHTML = `
+    <div class="pt">扫码付款 ${amount}</div>
+    <div id="payQr" class="qr"></div>
+    <div class="psub">订单 ${d.orderId || ''}</div>
+    <div class="ptimer">剩余 <b id="payLeft">15:00</b></div>
+    <a class="pbtn" href="${d.payH5Url}" target="_blank" rel="noopener">在麦当劳官方页付款 ›</a>
+    <div class="pstate" id="payState">等待付款…</div>
+    <button class="pclose" onclick="closePay()">关闭</button>`;
+  box.classList.add('on');
+  drawQr(d.payH5Url);
+  clearInterval(payTimer); clearInterval(payPoll);
+  payTimer = setInterval(() => {
+    const s = Math.max(0, Math.round((expire - Date.now()) / 1000));
+    const el = document.getElementById('payLeft');
+    if (el) el.textContent = String(Math.floor(s / 60)).padStart(2, '0') + ':' + String(s % 60).padStart(2, '0');
+    if (s <= 0) { clearInterval(payTimer); clearInterval(payPoll);
+      const st = document.getElementById('payState'); if (st) st.textContent = '已超时，订单会自动取消'; }
+  }, 1000);
+  // 每 3 秒查一次订单状态：待支付 → 配餐中 即付款成功，此时才有取餐码
+  payPoll = setInterval(async () => {
+    try {
+      const j = await api('/api/order/' + encodeURIComponent(d.orderId));
+      const st = document.getElementById('payState');
+      if (!j.ok || !j.order) return;
+      if (j.order.pickupCode) {
+        clearInterval(payPoll); clearInterval(payTimer);
+        if (st) st.innerHTML = `付款成功 · 取餐码 <b>${j.order.pickupCode}</b>`;
+      } else if (j.order.statusName) {
+        if (st) st.textContent = j.order.statusName;
+      }
+    } catch { /* 忽略单次查询失败 */ }
+  }, 3000);
+}
+function closePay(){
+  clearInterval(payTimer); clearInterval(payPoll);
+  $('payBox').classList.remove('on');
+}
+// 二维码：优先用 CDN 的 qrcode，拿不到就退化成可点链接
+function drawQr(text){
+  const el = document.getElementById('payQr'); if (!el) return;
+  const draw = (Q) => { el.innerHTML = ''; new Q(el, { text, width: 168, height: 168,
+    colorDark: '#000', colorLight: '#fff', correctLevel: Q.CorrectLevel.M }); };
+  if (window.QRCode) return draw(window.QRCode);
+  const s = document.createElement('script');
+  s.src = 'https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js';
+  s.onload = () => window.QRCode ? draw(window.QRCode) : (el.innerHTML = '');
+  s.onerror = () => { el.innerHTML = ''; };
+  document.head.appendChild(s);
+}
 
 /* ---------- 启动 ---------- */
 (async () => {

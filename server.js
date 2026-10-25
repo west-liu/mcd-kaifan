@@ -27,6 +27,8 @@ const { planAll, PREF_LABEL } = require('./lib/planner');
 const PORT = Number(process.env.PORT || 5173);
 const DEFAULT_CITY = process.env.DEFAULT_CITY || '广州';
 const DEFAULT_STORE = process.env.DEFAULT_STORE || '';
+// 演示口令：设了才要求下单时带 x-demo-pass，避免公网被人用你的账号刷真单
+const DEMO_PASS = process.env.DEMO_PASS || '';
 const MEDIA_DIR = path.join(__dirname, 'public');
 
 // ---------- 工具 ----------
@@ -40,6 +42,13 @@ function readBody(req) {
     req.on('data', (c) => { b += c; if (b.length > 1e6) reject(new Error('payload too large')); });
     req.on('end', () => { try { resolve(b ? JSON.parse(b) : {}); } catch { reject(new Error('bad json')); } });
   });
+}
+// 口令校验：没配 DEMO_PASS 时全放开（本地开发）；配了就必须带对 x-demo-pass
+function passOk(req) {
+  if (!DEMO_PASS) return true;
+  const got = String(req.headers['x-demo-pass'] || '');
+  if (got.length !== DEMO_PASS.length) return false;
+  return got === DEMO_PASS;
 }
 
 // ---------- AI 点评（可选：配置 TOKLENS_KEY 后启用）----------
@@ -149,6 +158,9 @@ async function enrichKcal(plans, storeCode, table, headcount, opts = {}) {
   return plans;
 }
 
+// ---------- 下单幂等（防连点重复建单）----------
+const recentOrders = new Map();
+
 // ---------- 方案存储（供前端轮询 AI 点评）----------
 const plans = new Map();
 const PLAN_TTL = 15 * 60 * 1000;
@@ -257,10 +269,15 @@ const server = http.createServer(async (req, res) => {
         summary: null,
       };
       payload.summary = localSummary(hero);
+      // 只有配了 AI Key 才会异步产出点评；前端据此决定是否轮询，避免无谓请求
+      payload.pollSummary = !!process.env.TOKLENS_KEY;
+      payload.summarySource = payload.pollSummary ? 'pending' : 'local';
       savePlan(payload);
-      aiSummary(hero, { headcount, budget, prefs })
-        .then((t) => { if (t) { payload.summary = t; payload.summarySource = 'ai'; } })
-        .catch(() => {});
+      if (payload.pollSummary) {
+        aiSummary(hero, { headcount, budget, prefs })
+          .then((t) => { if (t) { payload.summary = t; payload.summarySource = 'ai'; } })
+          .catch(() => {});
+      }
       return send(res, 200, { ok: true, plan: payload });
     }
 
@@ -302,6 +319,9 @@ const server = http.createServer(async (req, res) => {
       if (process.env.ENABLE_ORDER === '0') {
         return send(res, 403, { ok: false, error: '服务端已关闭真实下单' });
       }
+      if (!passOk(req)) {
+        return send(res, 401, { ok: false, passRequired: true, error: '需要演示口令才能下单' });
+      }
       const b = await readBody(req);
       if (!b.confirm) return send(res, 400, { ok: false, error: '需要二次确认才会下单' });
       const storeCode = b.storeCode;
@@ -320,8 +340,50 @@ const server = http.createServer(async (req, res) => {
       } else {
         args.takeWayCode = b.takeWayCode || 'take-in-store';
       }
+      // 幂等：60 秒内「同门店 + 同商品 + 同取餐方式」只建一单，防连点/重试建出重复单
+      const sig = way + '|' + storeCode + '|' + items.map((i) => `${i.productCode}x${i.quantity}`).sort().join(',');
+      const now = Date.now();
+      for (const [k, v] of recentOrders) if (now - v.at > 60 * 1000) recentOrders.delete(k);
+      const hit = recentOrders.get(sig);
+      if (hit && now - hit.at < 60 * 1000) {
+        return send(res, 200, {
+          ok: true, duplicated: true, data: hit.data,
+          note: '60 秒内已下过同一单，直接返回上一张，未重复创建',
+        });
+      }
+
       const r = await mcp.callRaw('create-order', args);
-      return send(res, 200, { ok: !r.isError, data: r.data?.data, text: r.text.slice(0, 600) });
+      const d = r.data?.data || {};
+      recentOrders.set(sig, { at: now, data: d });
+      return send(res, 200, {
+        ok: !r.isError,
+        data: d,
+        // 支付链接只在下单这次返回，query-order 查不回来，必须第一时间给到前端
+        orderId: d.orderId || '',
+        payH5Url: d.payH5Url || '',
+        expirePayTime: d.expirePayTime || '',
+        payAmount: d.payAmount || d.price || '',
+        text: r.text.slice(0, 600),
+      });
+    }
+
+    // 订单状态 / 取餐码（付款成功后 pickupCode 才有值）
+    const mOrder = p.match(/^\/api\/order\/([A-Za-z0-9]+)$/);
+    if (mOrder) {
+      if (!passOk(req)) {
+        return send(res, 401, { ok: false, passRequired: true, error: '需要演示口令才能查订单' });
+      }
+      const r = await mcp.callRaw('query-order', { orderId: mOrder[1] });
+      const d = r.data?.data || {};
+      return send(res, 200, {
+        ok: !r.isError,
+        order: {
+          orderId: d.orderId || mOrder[1],
+          status: d.status, statusName: d.statusName || d.orderStatusName || '',
+          pickupCode: d.pickupCode || '',
+          payAmount: d.payAmount || '',
+        },
+      });
     }
 
     // 健康检查 / MCP 连通性自检
@@ -332,6 +394,8 @@ const server = http.createServer(async (req, res) => {
         endpoint: 'https://mcp.mcd.cn',
         tokenConfigured: !!process.env.MCD_TOKEN,
         toolsAvailable: tools.length,
+        orderEnabled: process.env.ENABLE_ORDER !== '0',
+        passRequired: !!DEMO_PASS,
         tools: tools.map((t) => t.name).filter((n) => [
           'query-nearby-stores', 'query-meals', 'calculate-price', 'create-order',
           'list-nutrition-foods', 'available-coupons', 'campaign-calendar',
