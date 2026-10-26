@@ -1021,18 +1021,16 @@ async function isLive(){
   return LIVE;
 }
 async function getPlan(payload){
-  // 不先用 /api/health 探活：手机网络下探活偶发超时，会把整页静默降级成静态快照。
-  // 直接试实时方案，成功即标记实时，失败再退回快照。
-  if (API_BASE) {
-    try {
-      const j = await api('/api/plan', {
-        method:'POST', headers:{'Content-Type':'application/json'},
-        body: JSON.stringify(payload),
-      });
-      LIVE = true;
-      return { ...j.plan, live: true };
-    } catch (e) { LIVE = false; }
-  }
+  // 不先用 /api/health 探活（手机网络下探活超时会静默降级成快照）；
+  // 也不能用 if(API_BASE) 做守卫——同源部署时 API_BASE 就是空串，相对路径 /api/plan 本来就能用。
+  try {
+    const j = await api('/api/plan', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify(payload),
+    });
+    LIVE = true;
+    return { ...j.plan, live: true };
+  } catch (e) { LIVE = false; }
   const s = await snapshot();
   const raw = window.Plan.planAll({
     headcount: payload.headcount, budget: payload.budget,
