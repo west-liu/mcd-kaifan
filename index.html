@@ -983,7 +983,14 @@ async function api(path, opts){
   return j;
 }
 /* 演示口令：存在本机，只有下单和查订单才需要 */
-function kfPass(){ try { return localStorage.getItem('kf_pass') || ''; } catch(e){ return ''; } }
+function kfPass(){
+  try {
+    const v = localStorage.getItem('kf_pass') || '';
+    // fetch 的 header 值只能是 ISO-8859-1，含中文/全角字符会让 fetch 直接抛错，先清掉历史脏值
+    if (v && /[^\x20-\x7E]/.test(v)) { localStorage.removeItem('kf_pass'); return ''; }
+    return v;
+  } catch(e){ return ''; }
+}
 function setKfPass(v){ try { v ? localStorage.setItem('kf_pass', v) : localStorage.removeItem('kf_pass'); } catch(e){} }
 const money = n => '¥' + (Math.round(n * 100) / 100).toFixed(1);
 
@@ -1007,19 +1014,22 @@ async function isLive(){
     LIVE = false; return LIVE;
   }
   try {
-    const r = await withTimeout(fetch(API_BASE + '/api/health'), 3000);
+    const r = await withTimeout(fetch(API_BASE + '/api/health'), 6000);
     const j = await r.json().catch(() => ({}));
     LIVE = !!(j && j.ok);
   } catch { LIVE = false; }
   return LIVE;
 }
 async function getPlan(payload){
-  if (await isLive()) {
+  // 不先用 /api/health 探活：手机网络下探活偶发超时，会把整页静默降级成静态快照。
+  // 直接试实时方案，成功即标记实时，失败再退回快照。
+  if (API_BASE) {
     try {
       const j = await api('/api/plan', {
         method:'POST', headers:{'Content-Type':'application/json'},
         body: JSON.stringify(payload),
       });
+      LIVE = true;
       return { ...j.plan, live: true };
     } catch (e) { LIVE = false; }
   }
@@ -1643,9 +1653,11 @@ async function submitOrder(payload){
     return await post();
   } catch (e) {
     if (!e.passRequired) throw e;
-    const v = window.prompt('这站开了口令保护，请输入演示口令后继续下单。\n\n口令在 GitHub 主页获取：github.com/west-liu/mcd-kaifan（README 的「立即体验」里写着）', '');
-    if (!v || !v.trim()) throw new Error('已取消（没有输入口令）');
-    setKfPass(v.trim());
+    const v = window.prompt('这站开了口令保护（免被陌生人刷真单）。\n\n演示口令：kf-ae182690\n\n（只含字母、数字和短横线，直接粘贴即可）', '');
+    // header 只能放 ASCII：把中文/全角/空格都清掉，避免 fetch 抛 ISO-8859-1 错误
+    const clean = String(v || '').replace(/[^\x21-\x7E]/g, '');
+    if (!clean) throw new Error('已取消（没有输入口令）');
+    setKfPass(clean);
     return await post();
   }
 }
