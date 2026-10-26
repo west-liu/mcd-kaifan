@@ -1097,7 +1097,11 @@ async function getPlan(payload){
     });
     LIVE = true;
     return { ...j.plan, live: true };
-  } catch (e) { LIVE = false; }
+  } catch (e) {
+    LIVE = false;
+    // 换了自己的 Token 却失败了，要明确说出来，否则会被误以为「实时版」正常
+    if (kfMcpToken()) toast('你自己的 MCP Token 没生效：' + (e.message || '请求失败') + '，已退回演示快照');
+  }
   const s = await snapshot();
   const raw = window.Plan.planAll({
     headcount: payload.headcount, budget: payload.budget,
