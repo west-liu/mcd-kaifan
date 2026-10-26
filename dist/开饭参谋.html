@@ -474,6 +474,7 @@ body{-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;}
       <h4>换成你自己的麦当劳 MCP Token</h4>
       <p>每天的下单额度是按 Token 算的。作者的额度用尽时，换自己的就能继续真下单。<br>Token 只存在你这台设备上，不会上传到别处。</p>
       <input id="mcpTokenInput" type="text" autocomplete="off" spellcheck="false" placeholder="粘贴 Bearer Token；留空 = 用作者的默认">
+      <input id="mcpEndpointInput" type="text" autocomplete="off" spellcheck="false" placeholder="MCP 地址（可留空，默认 https://mcp.mcd.cn）" style="margin-top:9px">
       <div class="mcpacts">
         <button class="c" id="mcpTokenCancel" type="button">取消</button>
         <button class="s" id="mcpTokenSave" type="button">保存并刷新</button>
@@ -1044,13 +1045,19 @@ function kfMcpEndpoint(){
   try { const v = localStorage.getItem('kf_mcp_endpoint') || ''; return /^https:\/\/[\x21-\x7E]+$/.test(v) ? v : ''; } catch(e){ return ''; }
 }
 function setMcpToken(t){ try { t ? localStorage.setItem('kf_mcp_token', t) : localStorage.removeItem('kf_mcp_token'); } catch(e){} }
+function setMcpEndpoint(u){ try { u ? localStorage.setItem('kf_mcp_endpoint', u) : localStorage.removeItem('kf_mcp_endpoint'); } catch(e){} }
 function mcpRefresh(){
   const who = document.getElementById('mcpWho');
   if (!who) return;
-  const t = kfMcpToken();
-  who.textContent = t
-    ? `MCP：你自己的 Token（${t.slice(0, 4)}…${t.slice(-4)}）`
-    : 'MCP：作者的 Token（默认，每日下单额度可能已被用尽）';
+  const t = kfMcpToken(), ep = kfMcpEndpoint();
+  if (t || ep) {
+    const parts = [];
+    if (t) parts.push('Token ' + t.slice(0, 4) + '…' + t.slice(-4));
+    if (ep) parts.push(ep.replace(/^https:\/\//, ''));
+    who.textContent = 'MCP：你自己的配置（' + parts.join(' · ') + '）';
+  } else {
+    who.textContent = 'MCP：作者的 Token（默认，每日下单额度可能已被用尽）';
+  }
 }
 const money = n => '¥' + (Math.round(n * 100) / 100).toFixed(1);
 
@@ -1820,16 +1827,21 @@ function drawQr(text){
   mcpRefresh();
   const modal = document.getElementById('mcpTokenModal');
   const input = document.getElementById('mcpTokenInput');
+  const epInput = document.getElementById('mcpEndpointInput');
   const openMcp = () => {
     if (!modal) return;
     input.value = kfMcpToken();
+    epInput.value = kfMcpEndpoint();
     modal.classList.add('on');
     setTimeout(() => input.focus(), 30);
   };
   const closeMcp = () => { if (modal) modal.classList.remove('on'); };
   const saveMcp = () => {
     const clean = String(input.value || '').replace(/[^\x21-\x7E]/g, '').trim();
+    let ep = String(epInput.value || '').replace(/[^\x21-\x7E]/g, '').trim().replace(/\/+$/, '');
+    if (ep && !/^https:\/\//i.test(ep)) ep = 'https://' + ep;
     setMcpToken(clean);
+    setMcpEndpoint(ep);
     mcpRefresh();
     location.reload();
   };
@@ -1838,10 +1850,12 @@ function drawQr(text){
   if (modal) {
     document.getElementById('mcpTokenCancel').onclick = closeMcp;
     document.getElementById('mcpTokenSave').onclick = saveMcp;
-    input.onkeydown = (e) => {
-      if (e.key === 'Enter') saveMcp();
-      if (e.key === 'Escape') closeMcp();
-    };
+    for (const el of [input, epInput]) {
+      el.onkeydown = (e) => {
+        if (e.key === 'Enter') saveMcp();
+        if (e.key === 'Escape') closeMcp();
+      };
+    }
     modal.onclick = (e) => { if (e.target === modal) closeMcp(); };
   }
   await loadStore('广州');
