@@ -45,6 +45,11 @@ header{padding:26px 0 18px;}
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .storebar .chg{font-size:11px;color:var(--gold);font-weight:700;flex:none;padding:4px 2px;}
 .storebar .meta{display:block;font-size:10.5px;color:var(--dim);font-weight:400;margin-top:2px;font-family:ui-monospace,Menlo,monospace;}
+.mcpbar{display:flex;align-items:center;gap:8px;margin:-6px 0 12px;padding:0 2px;font-size:11px;color:var(--dim);}
+.mcpbar span{flex:1;line-height:1.4;}
+.mcpbar button{flex:none;font-size:11px;font-weight:700;color:var(--gold);background:transparent;
+  border:1px solid rgba(255,199,44,.5);border-radius:7px;padding:4px 9px;cursor:pointer;}
+.mcpbar button:active{background:rgba(255,199,44,.15);}
 
 /* ---------- 面板 ---------- */
 .panel{
@@ -442,6 +447,11 @@ body{-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;}
     <span class="dot"></span>
     <div class="nm" id="storeName">正在连接门店…<span class="meta" id="storeMeta">MCP</span></div>
     <div class="chg" id="changeStore">换店 ›</div>
+  </div>
+
+  <div class="mcpbar">
+    <span id="mcpWho">MCP：作者的 Token（默认）</span>
+    <button id="mcpBtn" type="button">换成我的</button>
   </div>
 
   <div class="waybar" id="wayBar">
@@ -971,8 +981,14 @@ const API_BASE = (function(){
 })();
 async function api(path, opts){
   opts = opts || {};
+  const h = { ...(opts.headers || {}) };
   const pass = kfPass();
-  if (pass) opts = { ...opts, headers: { ...(opts.headers || {}), 'x-demo-pass': pass } };
+  if (pass) h['x-demo-pass'] = pass;
+  const mt = kfMcpToken();
+  if (mt) h['x-mcp-token'] = mt;
+  const me = kfMcpEndpoint();
+  if (me) h['x-mcp-endpoint'] = me;
+  opts = { ...opts, headers: h };
   const r = await fetch(API_BASE + path, opts);
   const j = await r.json().catch(() => ({ ok:false, error:'返回异常' }));
   if (!j.ok) {
@@ -992,6 +1008,23 @@ function kfPass(){
   } catch(e){ return ''; }
 }
 function setKfPass(v){ try { v ? localStorage.setItem('kf_pass', v) : localStorage.removeItem('kf_pass'); } catch(e){} }
+
+/* 访客可换成自己的麦当劳 MCP Token：只存本机，随请求头透传给后端；默认留空=用作者的 */
+function kfMcpToken(){
+  try { const v = localStorage.getItem('kf_mcp_token') || ''; return /^[\x21-\x7E]{8,200}$/.test(v) ? v : ''; } catch(e){ return ''; }
+}
+function kfMcpEndpoint(){
+  try { const v = localStorage.getItem('kf_mcp_endpoint') || ''; return /^https:\/\/[\x21-\x7E]+$/.test(v) ? v : ''; } catch(e){ return ''; }
+}
+function setMcpToken(t){ try { t ? localStorage.setItem('kf_mcp_token', t) : localStorage.removeItem('kf_mcp_token'); } catch(e){} }
+function mcpRefresh(){
+  const who = document.getElementById('mcpWho');
+  if (!who) return;
+  const t = kfMcpToken();
+  who.textContent = t
+    ? `MCP：你自己的 Token（${t.slice(0, 4)}…${t.slice(-4)}）`
+    : 'MCP：作者的 Token（默认，每日下单额度可能已被用尽）';
+}
 const money = n => '¥' + (Math.round(n * 100) / 100).toFixed(1);
 
 /* ---------- 在线静态版：没有后端时，用真实 MCP 数据快照在浏览器里算 ---------- */
@@ -1757,6 +1790,19 @@ function drawQr(text){
 /* ---------- 启动 ---------- */
 (async () => {
   renderPeople(); syncSub();
+  mcpRefresh();
+  const btn = document.getElementById('mcpBtn');
+  if (btn) btn.onclick = () => {
+    const cur = kfMcpToken();
+    const v = window.prompt(
+      '换成你自己的麦当劳 MCP Token（Bearer）。\n\n留空 = 恢复用作者的默认 Token。\n'
+      + '（每日下单额度是按 Token 算的，作者额度用尽时换自己的就能继续下单）', cur);
+    if (v === null) return;
+    const clean = String(v).replace(/[^\x21-\x7E]/g, '');
+    setMcpToken(clean);
+    mcpRefresh();
+    location.reload();
+  };
   await loadStore('广州');
 })();
 </script>
