@@ -1034,7 +1034,12 @@ async function api(path, opts){
 /* 演示口令：存在本机，只有下单和查订单才需要 */
 function kfPass(){
   try {
-    const v = localStorage.getItem('kf_pass') || '';
+    let v = localStorage.getItem('kf_pass') || '';
+    // 历史脏值里的各种「假横线」先救回来
+    if (v && new RegExp('[\\u2010-\\u2015\\u2212\\uFF0D]').test(v)) {
+      v = v.replace(new RegExp('[\\u2010-\\u2015\\u2212\\uFF0D]', 'g'), '-');
+      localStorage.setItem('kf_pass', v);
+    }
     // fetch 的 header 值只能是 ISO-8859-1，含中文/全角字符会让 fetch 直接抛错，先清掉历史脏值
     if (v && /[^\x20-\x7E]/.test(v)) { localStorage.removeItem('kf_pass'); return ''; }
     return v;
@@ -1719,11 +1724,17 @@ async function submitOrder(payload){
   } catch (e) {
     if (!e.passRequired) throw e;
     const v = window.prompt('这站开了口令保护（免被陌生人刷真单）。\n\n演示口令：kf-ae182690\n\n（只含字母、数字和短横线，直接粘贴即可）', '');
-    // header 只能放 ASCII：把中文/全角/空格都清掉，避免 fetch 抛 ISO-8859-1 错误
-    const clean = String(v || '').replace(/[^\x21-\x7E]/g, '');
+    // 复制推广文案时短横线常被带成不间断连字符/全角横线，先统一成 ASCII '-'，再清掉其它非 ASCII
+    const clean = String(v || '').replace(new RegExp('[\\u2010-\\u2015\\u2212\\uFF0D]', 'g'), '-').replace(/[^\x21-\x7E]/g, '');
     if (!clean) throw new Error('已取消（没有输入口令）');
     setKfPass(clean);
-    return await post();
+    try {
+      return await post();
+    } catch (e2) {
+      // 重试仍 401 = 口令本身不对，清掉存值让下次重新问，别报成「需要口令」让人误以为没生效
+      if (e2.passRequired) { setKfPass(''); throw new Error('口令不对（注意短横线是英文 -），重新点「让 MCP 真下单」再试'); }
+      throw e2;
+    }
   }
 }
 $('confirmYes').onclick = async () => {
