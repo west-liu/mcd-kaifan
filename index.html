@@ -57,6 +57,10 @@ header{padding:26px 0 18px;}
   border-radius:16px;padding:18px;color:var(--paper);}
 .mcpbox h4{font-size:15px;font-weight:800;margin-bottom:8px;}
 .mcpbox p{font-size:12px;line-height:1.6;color:var(--dim);margin-bottom:12px;}
+.mcpbox p.tip{font-size:11.5px;line-height:1.7;background:rgba(255,199,44,.07);border:1px solid rgba(255,199,44,.18);
+  border-radius:10px;padding:9px 11px;margin-bottom:12px;color:#C8BCA4;}
+.mcpbox p.tip a{color:var(--gold);font-weight:700;text-decoration:none;border-bottom:1px solid rgba(255,199,44,.5);}
+.mcpbox p.tip code{font-family:ui-monospace,Menlo,monospace;font-size:11px;color:var(--gold);}
 .mcpbox input{width:100%;background:rgba(255,255,255,.06);border:1px solid var(--line);
   border-radius:10px;padding:11px 12px;color:var(--paper);font-size:13px;outline:none;
   font-family:ui-monospace,Menlo,monospace;}
@@ -472,9 +476,9 @@ body{-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;}
   <div class="mcpmodal" id="mcpTokenModal">
     <div class="mcpbox">
       <h4>换成你自己的麦当劳 MCP Token</h4>
-      <p>每天的下单额度是按 Token 算的。作者的额度用尽时，换自己的就能继续真下单。<br>Token 只存在你这台设备上，不会上传到别处。</p>
-      <input id="mcpTokenInput" type="text" autocomplete="off" spellcheck="false" placeholder="粘贴 Bearer Token；留空 = 用作者的默认">
-      <input id="mcpEndpointInput" type="text" autocomplete="off" spellcheck="false" placeholder="MCP 地址（可留空，默认 https://mcp.mcd.cn）" style="margin-top:9px">
+      <p>每天的下单额度是按 Token 算的。作者的额度用尽时，换自己的就能继续真下单。</p>
+      <p class="tip">Token 免费领：<a href="https://open.mcd.cn/mcp" target="_blank" rel="noopener">open.mcd.cn/mcp</a> → 右上角「登录」（手机号验证）→「控制台」→「激活」→ 一键复制。<br>只粘贴 Token 本体，不要带 <code>Bearer</code>。Token 只存在你这台设备上。</p>
+      <input id="mcpTokenInput" type="text" autocomplete="off" spellcheck="false" placeholder="粘贴 Token（例：a1b2c3d4…）">
       <div class="mcpacts">
         <button class="c" id="mcpTokenCancel" type="button">取消</button>
         <button class="s" id="mcpTokenSave" type="button">保存并刷新</button>
@@ -1005,7 +1009,10 @@ const API_BASE = (function(){
   if (q) { try { localStorage.setItem('kf_api', norm(q)); } catch(e){} return norm(q); }
   if (window.__KF_API__) return norm(window.__KF_API__);
   let s = null; try { s = localStorage.getItem('kf_api'); } catch(e){}
-  return norm(s);
+  if (s) return norm(s);
+  // GitHub Pages 是纯静态托管，没有后端；默认指向作者的实时后端，这样不带 ?api= 也能真下单
+  if (/(^|\.)github\.io$/.test(location.hostname)) return 'https://kaifan.waymate.vip';
+  return '';
 })();
 async function api(path, opts){
   opts = opts || {};
@@ -1014,8 +1021,6 @@ async function api(path, opts){
   if (pass) h['x-demo-pass'] = pass;
   const mt = kfMcpToken();
   if (mt) h['x-mcp-token'] = mt;
-  const me = kfMcpEndpoint();
-  if (me) h['x-mcp-endpoint'] = me;
   opts = { ...opts, headers: h };
   const r = await fetch(API_BASE + path, opts);
   const j = await r.json().catch(() => ({ ok:false, error:'返回异常' }));
@@ -1041,23 +1046,14 @@ function setKfPass(v){ try { v ? localStorage.setItem('kf_pass', v) : localStora
 function kfMcpToken(){
   try { const v = localStorage.getItem('kf_mcp_token') || ''; return /^[\x21-\x7E]{8,200}$/.test(v) ? v : ''; } catch(e){ return ''; }
 }
-function kfMcpEndpoint(){
-  try { const v = localStorage.getItem('kf_mcp_endpoint') || ''; return /^https:\/\/[\x21-\x7E]+$/.test(v) ? v : ''; } catch(e){ return ''; }
-}
 function setMcpToken(t){ try { t ? localStorage.setItem('kf_mcp_token', t) : localStorage.removeItem('kf_mcp_token'); } catch(e){} }
-function setMcpEndpoint(u){ try { u ? localStorage.setItem('kf_mcp_endpoint', u) : localStorage.removeItem('kf_mcp_endpoint'); } catch(e){} }
 function mcpRefresh(){
   const who = document.getElementById('mcpWho');
   if (!who) return;
-  const t = kfMcpToken(), ep = kfMcpEndpoint();
-  if (t || ep) {
-    const parts = [];
-    if (t) parts.push('Token ' + t.slice(0, 4) + '…' + t.slice(-4));
-    if (ep) parts.push(ep.replace(/^https:\/\//, ''));
-    who.textContent = 'MCP：你自己的配置（' + parts.join(' · ') + '）';
-  } else {
-    who.textContent = 'MCP：作者的 Token（默认，每日下单额度可能已被用尽）';
-  }
+  const t = kfMcpToken();
+  who.textContent = t
+    ? 'MCP：你自己的 Token（' + t.slice(0, 4) + '…' + t.slice(-4) + '）'
+    : 'MCP：作者的 Token（默认，每日下单额度可能已被用尽）';
 }
 const money = n => '¥' + (Math.round(n * 100) / 100).toFixed(1);
 
@@ -1831,21 +1827,16 @@ function drawQr(text){
   mcpRefresh();
   const modal = document.getElementById('mcpTokenModal');
   const input = document.getElementById('mcpTokenInput');
-  const epInput = document.getElementById('mcpEndpointInput');
   const openMcp = () => {
     if (!modal) return;
     input.value = kfMcpToken();
-    epInput.value = kfMcpEndpoint();
     modal.classList.add('on');
     setTimeout(() => input.focus(), 30);
   };
   const closeMcp = () => { if (modal) modal.classList.remove('on'); };
   const saveMcp = () => {
-    const clean = String(input.value || '').replace(/[^\x21-\x7E]/g, '').trim();
-    let ep = String(epInput.value || '').replace(/[^\x21-\x7E]/g, '').trim().replace(/\/+$/, '');
-    if (ep && !/^https:\/\//i.test(ep)) ep = 'https://' + ep;
+    const clean = String(input.value || '').replace(/[^\x21-\x7E]/g, '').replace(/^Bearer\s+/i, '').trim();
     setMcpToken(clean);
-    setMcpEndpoint(ep);
     mcpRefresh();
     location.reload();
   };
@@ -1854,12 +1845,10 @@ function drawQr(text){
   if (modal) {
     document.getElementById('mcpTokenCancel').onclick = closeMcp;
     document.getElementById('mcpTokenSave').onclick = saveMcp;
-    for (const el of [input, epInput]) {
-      el.onkeydown = (e) => {
-        if (e.key === 'Enter') saveMcp();
-        if (e.key === 'Escape') closeMcp();
-      };
-    }
+    input.onkeydown = (e) => {
+      if (e.key === 'Enter') saveMcp();
+      if (e.key === 'Escape') closeMcp();
+    };
     modal.onclick = (e) => { if (e.target === modal) closeMcp(); };
   }
   await loadStore('广州');
