@@ -50,6 +50,21 @@ header{padding:26px 0 18px;}
 .mcpbar button{flex:none;font-size:11px;font-weight:700;color:var(--gold);background:transparent;
   border:1px solid rgba(255,199,44,.5);border-radius:7px;padding:4px 9px;cursor:pointer;}
 .mcpbar button:active{background:rgba(255,199,44,.15);}
+.mcpmodal{position:fixed;inset:0;z-index:95;background:rgba(0,0,0,.6);display:none;
+  align-items:center;justify-content:center;padding:20px;}
+.mcpmodal.on{display:flex;}
+.mcpbox{width:100%;max-width:400px;background:#241C11;border:1px solid rgba(255,199,44,.3);
+  border-radius:16px;padding:18px;color:var(--paper);}
+.mcpbox h4{font-size:15px;font-weight:800;margin-bottom:8px;}
+.mcpbox p{font-size:12px;line-height:1.6;color:var(--dim);margin-bottom:12px;}
+.mcpbox input{width:100%;background:rgba(255,255,255,.06);border:1px solid var(--line);
+  border-radius:10px;padding:11px 12px;color:var(--paper);font-size:13px;outline:none;
+  font-family:ui-monospace,Menlo,monospace;}
+.mcpbox input:focus{border-color:var(--gold);}
+.mcpacts{display:flex;gap:9px;margin-top:13px;}
+.mcpacts button{flex:1;border-radius:11px;padding:11px;font-size:13px;font-weight:700;border:none;cursor:pointer;}
+.mcpacts .c{background:rgba(255,255,255,.08);color:var(--paper);border:1px solid var(--line);}
+.mcpacts .s{background:var(--gold);color:#2A1C05;}
 
 /* ---------- 面板 ---------- */
 .panel{
@@ -452,6 +467,18 @@ body{-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;}
   <div class="mcpbar">
     <span id="mcpWho">MCP：作者的 Token（默认）</span>
     <button id="mcpBtn" type="button">换成我的</button>
+  </div>
+
+  <div class="mcpmodal" id="mcpTokenModal">
+    <div class="mcpbox">
+      <h4>换成你自己的麦当劳 MCP Token</h4>
+      <p>每天的下单额度是按 Token 算的。作者的额度用尽时，换自己的就能继续真下单。<br>Token 只存在你这台设备上，不会上传到别处。</p>
+      <input id="mcpTokenInput" type="text" autocomplete="off" spellcheck="false" placeholder="粘贴 Bearer Token；留空 = 用作者的默认">
+      <div class="mcpacts">
+        <button class="c" id="mcpTokenCancel" type="button">取消</button>
+        <button class="s" id="mcpTokenSave" type="button">保存并刷新</button>
+      </div>
+    </div>
   </div>
 
   <div class="waybar" id="wayBar">
@@ -1791,18 +1818,32 @@ function drawQr(text){
 (async () => {
   renderPeople(); syncSub();
   mcpRefresh();
-  const btn = document.getElementById('mcpBtn');
-  if (btn) btn.onclick = () => {
-    const cur = kfMcpToken();
-    const v = window.prompt(
-      '换成你自己的麦当劳 MCP Token（Bearer）。\n\n留空 = 恢复用作者的默认 Token。\n'
-      + '（每日下单额度是按 Token 算的，作者额度用尽时换自己的就能继续下单）', cur);
-    if (v === null) return;
-    const clean = String(v).replace(/[^\x21-\x7E]/g, '');
+  const modal = document.getElementById('mcpTokenModal');
+  const input = document.getElementById('mcpTokenInput');
+  const openMcp = () => {
+    if (!modal) return;
+    input.value = kfMcpToken();
+    modal.classList.add('on');
+    setTimeout(() => input.focus(), 30);
+  };
+  const closeMcp = () => { if (modal) modal.classList.remove('on'); };
+  const saveMcp = () => {
+    const clean = String(input.value || '').replace(/[^\x21-\x7E]/g, '').trim();
     setMcpToken(clean);
     mcpRefresh();
     location.reload();
   };
+  const btn = document.getElementById('mcpBtn');
+  if (btn) btn.onclick = openMcp;
+  if (modal) {
+    document.getElementById('mcpTokenCancel').onclick = closeMcp;
+    document.getElementById('mcpTokenSave').onclick = saveMcp;
+    input.onkeydown = (e) => {
+      if (e.key === 'Enter') saveMcp();
+      if (e.key === 'Escape') closeMcp();
+    };
+    modal.onclick = (e) => { if (e.target === modal) closeMcp(); };
+  }
   await loadStore('广州');
 })();
 </script>
